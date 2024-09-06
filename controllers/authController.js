@@ -2,6 +2,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const generateAccessToken = (user) => {
+    return jwt.sign({ user: { id: user.id, role: user.user_role } }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+const generateRefreshToken = (user) => {
+    return jwt.sign({ user: { id: user.id, role: user.user_role } }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+};
+
 exports.register = async (req, res) => {
     const { username, password, email, user_role, phone, address } = req.body;
 
@@ -16,14 +24,14 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
 
+        const refreshToken = generateRefreshToken(user);
+        user.refreshToken = refreshToken;
+
         await user.save();
 
-        const payload = { user: { id: user.id, role: user.user_role } };
+        const token = generateAccessToken(user);
 
-        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-            if (err) throw err;
-            res.json({ token });
-        });
+        res.json({ token, refreshToken });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -44,20 +52,46 @@ exports.login = async (req, res) => {
             return res.status(400).json({ msg: 'Invalid credentials' });
         }
 
-        const payload = { user: { id: user.id, role: user.user_role } };
+        const token = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+        user.refreshToken = refreshToken;
+        await user.save();
 
-        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-            if (err) throw err;
-            res.json({ user: {
+        res.json({
+            user: {
                 id: user.id,
                 username: user.username,
                 email: user.email,
                 user_role: user.user_role,
                 phone: user.phone,
                 address: user.address,
-                token: token
-            }});
+                token: token,
+                refreshToken: refreshToken
+            }
         });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+exports.refreshToken = async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(401).json({ msg: 'No refresh token provided' });
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const user = await User.findById(decoded.user.id);
+
+        if (!user || user.refreshToken !== refreshToken) {
+            return res.status(401).json({ msg: 'Invalid refresh token' });
+        }
+
+        const newAccessToken = generateAccessToken(user);
+        res.json({ token: newAccessToken });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
