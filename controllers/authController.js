@@ -107,3 +107,17 @@ exports.getUser = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+//logout function
+exports.logout = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.refreshToken = '';
+        await user.save();
+        res.json({ msg: 'User logged out' });
+    }
+    catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+}
