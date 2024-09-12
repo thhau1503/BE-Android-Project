@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getUser } = require('../controllers/authController');
+const { register, login, getUserInfo } = require('../controllers/authController');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -22,8 +22,6 @@ const router = express.Router();
  *               email:
  *                 type: string
  *               password:
- *                 type: string
- *               user_role:
  *                 type: string
  *               phone:
  *                 type: string
@@ -92,6 +90,6 @@ router.post('/login', login);
  *       401:
  *         description: Không có quyền truy cập
  */
-router.get('/me', auth, getUser);
+router.get('/me', auth, getUserInfo);
 
 module.exports = router;
