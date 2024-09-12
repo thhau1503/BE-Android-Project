@@ -12,6 +12,23 @@ const options = {
             {
                 url: 'http://localhost:5000',
             },
+            {
+                url: 'https://be-android-project.onrender.com',
+            },
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
+        security: [
+            {
+                bearerAuth: [],
+            },
         ],
     },
     apis: ['./routes/*.js'], 

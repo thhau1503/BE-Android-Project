@@ -41,7 +41,7 @@ router.post('/register', register);
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Đăng nhập người dùng
+ *     summary: Đăng nhập và lấy token
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -56,7 +56,7 @@ router.post('/register', register);
  *                 type: string
  *     responses:
  *       200:
- *         description: Đăng nhập thành công
+ *         description: Đăng nhập thành công và trả về token
  *         content:
  *           application/json:
  *             schema:
@@ -64,24 +64,22 @@ router.post('/register', register);
  *               properties:
  *                 token:
  *                   type: string
- *                 refreshToken:
- *                   type: string
  *       400:
- *         description: Thông tin đăng nhập không hợp lệ
+ *         description: Yêu cầu không hợp lệ
  */
 router.post('/login', login);
 
 /**
  * @swagger
- * /api/auth/user:
+ * /api/auth/me:
  *   get:
- *     summary: Lấy thông tin người dùng
+ *     summary: Lấy thông tin người dùng hiện tại
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Thông tin người dùng
+ *         description: Thông tin người dùng hiện tại
  *         content:
  *           application/json:
  *             schema:
@@ -89,19 +87,11 @@ router.post('/login', login);
  *               properties:
  *                 id:
  *                   type: string
- *                 username:
- *                   type: string
  *                 email:
- *                   type: string
- *                 user_role:
- *                   type: string
- *                 phone:
- *                   type: string
- *                 address:
  *                   type: string
  *       401:
  *         description: Không có quyền truy cập
  */
-router.get('/user', auth, getUser);
+router.get('/me', auth, getUser);
 
 module.exports = router;

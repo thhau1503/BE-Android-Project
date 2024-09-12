@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { generateOTP } = require('../services/otpService');
+const { sendOTP } = require('../services/emailService');
 
 const generateAccessToken = (user) => {
     return jwt.sign({ user: { id: user.id, role: user.user_role } }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -26,6 +28,8 @@ exports.register = async (req, res) => {
 
         const refreshToken = generateRefreshToken(user);
         user.refreshToken = refreshToken;
+
+        sendOTP(email, generateOTP());
 
         await user.save();
 
@@ -108,7 +112,6 @@ exports.getUser = async (req, res) => {
     }
 };
 
-//logout function
 exports.logout = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
