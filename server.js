@@ -33,8 +33,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const authRoutes = require('./routes/auth');
 const notificationRoutes = require('./routes/notification');
+const postRoutes = require('./routes/post');
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
+app.use('/api/post', postRoutes);
 
 // Thiết lập kết nối WebSocket
 io.on('connection', (socket) => {
@@ -44,7 +46,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Lưu trữ đối tượng io để sử dụng trong các controller
 app.set('socketio', io);
 
 const PORT = process.env.PORT || 5000;
