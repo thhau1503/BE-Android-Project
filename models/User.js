@@ -8,7 +8,11 @@ const userSchema = new Schema({
     user_role: { type: String, enum: ['Admin', 'User','Renter'], default: 'User' ,required: false },
     phone: { type: String, required: true },
     address: { type: String, required: true },
-    create_at: { type: Date, default: Date.now },
-});
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
+}, {
+    timestamps: true
+}
+);
 
 module.exports = mongoose.model('User', userSchema);

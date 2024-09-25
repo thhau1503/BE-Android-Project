@@ -175,3 +175,30 @@ exports.getUserInfo = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+
+exports.updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { username, password, email, phone, address } = req.body;
+
+  try {
+    let user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (address) user.address = address;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+    res.json({ msg: "User updated successfully", user });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
