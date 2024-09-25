@@ -1,20 +1,28 @@
+const mongoose = require('mongoose');
 const Post = require('../models/Post');
 
 exports.createPost = async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.body.landlord)) {
+            return res.status(400).json({ message: 'ID not found' });
+        }
+
         const post = new Post(req.body);
         await post.save();
         res.status(201).json(post);
     } catch (err) {
+        console.log(err);
         res.status(400).json({ message: err.message });
+
     }
 };
 
 exports.getAllPosts = async (req, res) => {
     try {
-        const posts = await Post.find();
+        const posts = await Post.find()
         res.json(posts);
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: err.message });
     }
 };
@@ -51,12 +59,12 @@ exports.deletePost = async (req, res) => {
 
 exports.searchPosts = async (req, res) => {
     try {
-        const { title, location, type, priceMin, priceMax } = req.query;
+        const { title, location, roomType, priceMin, priceMax } = req.query;
         const query = {};
 
         if (title) query.title = { $regex: title, $options: 'i' }; 
-        if (location) query.location = { $regex: location, $options: 'i' }; 
-        if (type) query.type = type;
+        if (location) query['location.address'] = { $regex: location, $options: 'i' }; 
+        if (roomType) query.roomType = roomType;
         if (priceMin) query.price = { ...query.price, $gte: priceMin };
         if (priceMax) query.price = { ...query.price, $lte: priceMax };
 
