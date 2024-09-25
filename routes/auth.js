@@ -1,6 +1,14 @@
-const express = require('express');
-const { register, login, getUserInfo, verifyOTP, forgotPassword, resetPassword } = require('../controllers/authController');
-const auth = require('../middleware/auth');
+const express = require("express");
+const {
+  register,
+  login,
+  getUserInfo,
+  verifyOTP,
+  forgotPassword,
+  resetPassword,
+  updateUser,
+} = require("../controllers/authController");
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -9,6 +17,36 @@ const router = express.Router();
  * tags:
  *   name: Auth
  *   description: API quản lý xác thực
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - username
+ *         - password
+ *         - email
+ *         - phone
+ *         - address
+ *       properties:
+ *         username:
+ *           type: string
+ *           description: The user's username
+ *         email:
+ *           type: string
+ *           description: The user's email
+ *         password:
+ *           type: string
+ *           description: The user's password
+ *         phone:
+ *           type: string
+ *           description: The user's phone number
+ *         address:
+ *           type: string
+ *           description: The user's address
  */
 
 /**
@@ -22,25 +60,63 @@ const router = express.Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               phone:
- *                 type: string
- *               address:
- *                 type: string
+ *             $ref: '#/components/schemas/User'
  *     responses:
  *       200:
  *         description: Đăng ký thành công
  *       400:
  *         description: Thông tin đăng ký không hợp lệ
  */
-router.post('/register', register);
+router.post("/register", register);
+
+/**
+ * @swagger
+ * /api/auth/update/{id}:
+ *   put:
+ *     summary: Cập nhật thông tin người dùng
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của người dùng cần cập nhật
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *             required:
+ *               - username
+ *               - email
+ *               - phone
+ *               - address
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Thông tin cập nhật không hợp lệ
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *       500:
+ *         description: Internal server error
+ */
+router.put("/update/:id", updateUser);
 
 /**
  * @swagger
@@ -90,7 +166,7 @@ router.post('/register', register);
  *                 msg:
  *                   type: string
  */
-router.post('/verify-otp', verifyOTP);
+router.post("/verify-otp", verifyOTP);
 
 /**
  * @swagger
@@ -122,7 +198,7 @@ router.post('/verify-otp', verifyOTP);
  *       400:
  *         description: Yêu cầu không hợp lệ
  */
-router.post('/login', login);
+router.post("/login", login);
 
 /**
  * @swagger
@@ -156,7 +232,7 @@ router.post('/login', login);
  *       500:
  *         description: Server error
  */
-router.post('/forgot-password', forgotPassword);
+router.post("/forgot-password", forgotPassword);
 
 /**
  * @swagger
@@ -206,7 +282,7 @@ router.post('/forgot-password', forgotPassword);
  *                 msg:
  *                   type: string
  */
-router.post('/reset-password', resetPassword);
+router.post("/reset-password", resetPassword);
 
 /**
  * @swagger
@@ -231,6 +307,6 @@ router.post('/reset-password', resetPassword);
  *       401:
  *         description: Không có quyền truy cập
  */
-router.get('/me', auth, getUserInfo);
+router.get("/me", auth, getUserInfo);
 
 module.exports = router;
