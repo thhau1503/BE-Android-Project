@@ -201,6 +201,26 @@ router.post('/create', postController.createPost);
 
 /**
  * @swagger
+ * /api/post/top-views:
+ *   get:
+ *     summary: Lấy ra 10 bài post có nhiều lượt xem nhất
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách 10 bài post có nhiều lượt xem nhất
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/top-views', postController.getTopPostsByViews);
+
+/**
+ * @swagger
  * /api/post/getAll:
  *   get:
  *     summary: Lấy danh sách tất cả bài viết
@@ -353,5 +373,6 @@ router.put('/:id', postController.updatePost);
  *         description: Internal server error
  */
 router.delete('/:id', postController.deletePost);
+
 
 module.exports = router;

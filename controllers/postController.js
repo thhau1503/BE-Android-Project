@@ -74,3 +74,13 @@ exports.searchPosts = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// Lấy ra 10 bài post có nhiều lượt xem nhất
+exports.getTopPostsByViews = async (req, res) => {
+    try {
+      const topPosts = await Post.find().sort({ views: -1 }).limit(10);
+      res.status(200).json(topPosts);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };

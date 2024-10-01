@@ -10,7 +10,9 @@ const postSchema = new Schema({
     price: { type: Number, required: true }, // Giá thuê
     location: locationSchema, // Embedded location
     landlord: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference người cho thuê
-    roomType: { type: String, enum: ['Single', 'Shared', 'Apartment', 'Dormitory'], required: true }, // Loại phòng
+    roomType: { type: String, 
+                enum: ['Single', 'Shared', 'Apartment', 'Dormitory'], 
+                required: true }, // Loại phòng
     size: { type: Number, required: true }, // Diện tích phòng (m2)
     availability: { type: Boolean, default: true }, // Tình trạng còn trống hay đã thuê
     amenities: amenitiesSchema, // Embedded amenities

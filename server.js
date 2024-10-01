@@ -34,9 +34,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const authRoutes = require('./routes/auth');
 const notificationRoutes = require('./routes/notification');
 const postRoutes = require('./routes/post');
+const favoriteRoutes = require('./routes/favorite');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/post', postRoutes);
+app.use('/api/favorite', favoriteRoutes);
 
 // Thiết lập kết nối WebSocket
 io.on('connection', (socket) => {
