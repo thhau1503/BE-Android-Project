@@ -202,3 +202,20 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+//Lấy thông tin người dùng theo id
+exports.getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
