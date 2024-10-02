@@ -374,5 +374,59 @@ router.put('/:id', postController.updatePost);
  */
 router.delete('/:id', postController.deletePost);
 
+/**
+ * @swagger
+ * /api/post/room-type/{roomType}:
+ *   get:
+ *     summary: Lấy danh sách trọ theo thể loại
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: roomType
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Thể loại phòng (Single, Shared, Apartment, Dormitory)
+ *     responses:
+ *       200:
+ *         description: Danh sách trọ theo thể loại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/room-type/:roomType', postController.getPostsByRoomType);
+
+/**
+ * @swagger
+ * /api/posts/district/{district}:
+ *   get:
+ *     summary: Lấy danh sách trọ theo địa chỉ (quận)
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: district
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Tên quận
+ *     responses:
+ *       200:
+ *         description: Danh sách trọ theo địa chỉ (quận)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/district/:district', postController.getPostsByDistrict);
+
 
 module.exports = router;
