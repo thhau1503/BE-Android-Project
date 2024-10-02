@@ -403,7 +403,7 @@ router.get('/room-type/:roomType', postController.getPostsByRoomType);
 
 /**
  * @swagger
- * /api/posts/district/{district}:
+ * /api/post/district/{district}:
  *   get:
  *     summary: Lấy danh sách trọ theo địa chỉ (quận)
  *     tags: [Posts]
