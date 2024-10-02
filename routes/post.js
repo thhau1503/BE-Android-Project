@@ -221,6 +221,46 @@ router.get('/top-views', postController.getTopPostsByViews);
 
 /**
  * @swagger
+ * /api/post/districts:
+ *   get:
+ *     summary: Lấy danh sách các quận từ các bài đăng
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các quận
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/districts', postController.getDistricts);
+
+/**
+ * @swagger
+ * /api/post/get-room-types:
+ *   get:
+ *     summary: Lấy danh sách các loại phòng từ các bài đăng
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các loại phòng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-room-types', postController.getRoomTypes);
+
+/**
+ * @swagger
  * /api/post/getAll:
  *   get:
  *     summary: Lấy danh sách tất cả bài viết
@@ -427,6 +467,5 @@ router.get('/room-type/:roomType', postController.getPostsByRoomType);
  *         description: Lỗi máy chủ
  */
 router.get('/district/:district', postController.getPostsByDistrict);
-
 
 module.exports = router;
