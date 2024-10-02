@@ -24,7 +24,7 @@ const postSchema = new Schema({
     status: { 
         type: String, 
         enum: ['Active', 'Inactive', 'Deleted'], 
-        default: 'active' 
+        default: 'Active' 
     }, // Trạng thái tin đăng
 
     createdAt: { type: Date, default: Date.now },

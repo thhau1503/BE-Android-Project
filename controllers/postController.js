@@ -84,3 +84,25 @@ exports.getTopPostsByViews = async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   };
+
+  // Lấy danh sách trọ theo thể loại
+exports.getPostsByRoomType = async (req, res) => {
+    try {
+      const roomType = req.params.roomType;
+      const posts = await Post.find({ roomType: roomType });
+      res.status(200).json(posts);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
+  // Lấy danh sách trọ theo địa chỉ (quận)
+  exports.getPostsByDistrict = async (req, res) => {
+    try {
+      const district = req.params.district;
+      const posts = await Post.find({ 'location.district': district });
+      res.status(200).json(posts);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
