@@ -7,6 +7,7 @@ const {
   forgotPassword,
   resetPassword,
   updateUser,
+  getUserById
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -308,5 +309,32 @@ router.post("/reset-password", resetPassword);
  *         description: Không có quyền truy cập
  */
 router.get("/me", auth, getUserInfo);
+
+/**
+ * @swagger
+ * /api/auth/user/{id}:
+ *   get:
+ *     summary: Lấy thông tin người dùng theo ID
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của người dùng
+ *     responses:
+ *       200:
+ *         description: Thông tin người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/user/:id', getUserById);
 
 module.exports = router;
