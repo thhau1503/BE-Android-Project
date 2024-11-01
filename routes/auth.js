@@ -335,6 +335,6 @@ router.get("/me", auth, getUserInfo);
  *       500:
  *         description: Lỗi máy chủ
  */
-router.get('/user/:id',auth(['Admin']), getUserById);
+router.get('/user/:id', getUserById);
 
 module.exports = router;
