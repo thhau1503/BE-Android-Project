@@ -1,5 +1,6 @@
 const express = require('express');
 const notificationController = require('../controllers/notificationController');
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 /**
@@ -76,6 +77,51 @@ router.post('/create', notificationController.createNotification);
  *                 $ref: '#/components/schemas/Notification'
  */
 router.get('/', notificationController.getNotifications);
+
+/**
+ * @swagger
+ * /api/notification/user:
+ *   get:
+ *     summary: Lấy thông báo theo ID người dùng hiện tại
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách thông báo của người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     description: Nội dung thông báo
+ *                   id_user:
+ *                     type: string
+ *                     description: ID của người dùng liên quan đến thông báo
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     description: Ngày tạo thông báo
+ *                 example:
+ *                   message: "Thông báo mới"
+ *                   id_user: "60d0fe4f5311236168a109ca"
+ *                   createdAt: "2021-07-21T17:32:28Z"
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Thông báo lỗi
+ */
+router.get('/user',auth, notificationController.getNotificationByUserId);
 
 /**
  * @swagger
