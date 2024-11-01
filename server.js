@@ -16,6 +16,8 @@ const io = socketIo(server, {
     }
 });
 
+app.set('socketio', io);
+
 // Kết nối tới MongoDB
 const db = process.env.MONGO_URI;
 mongoose.connect(db, {
@@ -35,15 +37,23 @@ const authRoutes = require('./routes/auth');
 const notificationRoutes = require('./routes/notification');
 const postRoutes = require('./routes/post');
 const favoriteRoutes = require('./routes/favorite');
+const chatRoutes = require('./routes/chat');
+const requestRoutes = require('./routes/request');
+const commentRoutes = require('./routes/comment');
+const messageRoutes = require('./routes/message');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/favorite', favoriteRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/request', requestRoutes);
+app.use('/api/comment', commentRoutes);
+app.use('/api/message', messageRoutes);
 
 // Thiết lập kết nối WebSocket
 io.on('connection', (socket) => {
-    console.log('New client connected');
+    console.log('New client connected hihi: ' + socket.id);
     socket.on('disconnect', () => {
         console.log('Client disconnected');
     });

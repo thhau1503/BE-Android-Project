@@ -7,11 +7,11 @@ const { generateOTP } = require("../services/otpService");
 const tempUserStore = new Map();
 
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+  return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 };
 
 const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, {
+  return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: "7d",
   });
 };
