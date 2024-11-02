@@ -16,7 +16,7 @@ const messageController = require("../controllers/messageController");
  *         chatId:
  *           type: string
  *           description: ID của đoạn chat
- *         senderId:
+ *         sender:
  *           type: string
  *           description: ID của người gửi
  *         content:
@@ -24,7 +24,7 @@ const messageController = require("../controllers/messageController");
  *           description: Nội dung tin nhắn
  *       example:
  *         chatId: "6724a39cb13ff366845f9606"
- *         senderId: "66f3e51e32c1888b7b514852"
+ *         sender: "66f3e51e32c1888b7b514852"
  *         content: "Hello, how are you?"
  */
 

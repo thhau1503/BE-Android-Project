@@ -7,7 +7,8 @@ const {
   forgotPassword,
   resetPassword,
   updateUser,
-  getUserById
+  getUserById,
+  updateUserRoleToRenter
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -118,6 +119,29 @@ router.post("/register", register);
  *         description: Internal server error
  */
 router.put("/update/:id", updateUser);
+
+/**
+ * @swagger
+ * /api/auth/update-role-to-renter/{userId}:
+ *   put:
+ *     summary: Cập nhật role của người dùng thành Renter
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng
+ *     responses:
+ *       200:
+ *         description: Role của người dùng đã được cập nhật thành Renter
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/update-role-to-renter/:userId', updateUserRoleToRenter);
 
 /**
  * @swagger
