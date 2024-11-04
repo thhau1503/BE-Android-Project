@@ -12,8 +12,27 @@ const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
         origin: "http://localhost:3000", 
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
+});
+
+io.on('connection', (socket) => {
+    console.log('New client connected: ' + socket.id);
+
+    socket.on('join_room', (chatId) => {
+        socket.join(chatId);
+        console.log(`User joined room: ${chatId}`);
+    });
+
+    socket.on('leave_room', (chatId) => {
+        socket.leave(chatId);
+        console.log(`User left room: ${chatId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
 });
 
 app.set('socketio', io);
@@ -50,16 +69,6 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/request', requestRoutes);
 app.use('/api/comment', commentRoutes);
 app.use('/api/message', messageRoutes);
-
-// Thiết lập kết nối WebSocket
-io.on('connection', (socket) => {
-    console.log('New client connected hihi: ' + socket.id);
-    socket.on('disconnect', () => {
-        console.log('Client disconnected');
-    });
-});
-
-app.set('socketio', io);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
