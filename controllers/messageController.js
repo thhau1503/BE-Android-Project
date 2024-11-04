@@ -5,9 +5,17 @@ const Message = require('../models/Message');
 exports.createMessage = async (req, res) => {
     const io = req.app.get('socketio');
     const newMessage = new Message(req.body);
+    
     try {
         const savedMessage = await newMessage.save();
-        io.to(savedMessage.chatId).emit('message', savedMessage);
+        
+        io.to(savedMessage.chatId).emit('new_message', {
+            _id: savedMessage._id,
+            chatId: savedMessage.chatId,
+            sender: savedMessage.sender,
+            content: savedMessage.content,
+        });
+        
         res.status(200).json(savedMessage);
     } catch (err) {
         console.log(err.message);

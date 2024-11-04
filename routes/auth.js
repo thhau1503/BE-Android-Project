@@ -332,7 +332,7 @@ router.post("/reset-password", resetPassword);
  *       401:
  *         description: Không có quyền truy cập
  */
-router.get("/me", auth, getUserInfo);
+router.get("/me", auth(['User','Renter']), getUserInfo);
 
 /**
  * @swagger
