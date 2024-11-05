@@ -162,14 +162,7 @@ exports.getUserInfo = async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      user_role: user.user_role,
-      phone: user.phone,
-      address: user.address,
-    });
+    res.status(200).json(user);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -248,5 +241,27 @@ exports.getAllUsers = async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server error" });
+  }
+};
+
+//Xóa người dùng theo id
+exports.deleteUserById = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    if(user.user_role == 'Admin')
+    {
+      return res.status(403).json({ msg: 'Cannot delete user with role Admin'});
+    }
+    await User.findByIdAndDelete(userId);
+    res.json({ msg: 'User deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
