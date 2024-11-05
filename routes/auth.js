@@ -101,6 +101,8 @@ router.post("/register", register);
  *                 type: string
  *               address:
  *                 type: string
+ *               password:
+ *                 type: string
  *             required:
  *               - username
  *               - email
