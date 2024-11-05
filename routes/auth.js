@@ -9,7 +9,8 @@ const {
   updateUser,
   getUserById,
   updateUserRoleToRenter,
-  getAllUsers
+  getAllUsers, 
+  deleteUserById
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -324,12 +325,7 @@ router.post("/reset-password", resetPassword);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                 email:
- *                   type: string
+ *               $ref: '#/components/schemas/User'
  *       401:
  *         description: Không có quyền truy cập
  */
@@ -381,5 +377,28 @@ router.get('/user/:id', getUserById);
  *         description: Lỗi server
  */
 router.get('/users', auth(['Admin']),getAllUsers);
+
+/**
+ * @swagger
+ * /api/auth/user/{userId}:
+ *   delete:
+ *     summary: Xóa người dùng theo ID
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng
+ *     responses:
+ *       200:
+ *         description: Người dùng đã được xóa thành công
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *       500:
+ *         description: Lỗi server
+ */
+router.delete('/user/:userId', auth(['Admin']),deleteUserById);
 
 module.exports = router;
