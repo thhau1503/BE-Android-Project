@@ -8,7 +8,8 @@ const {
   resetPassword,
   updateUser,
   getUserById,
-  updateUserRoleToRenter
+  updateUserRoleToRenter,
+  getAllUsers
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -332,7 +333,7 @@ router.post("/reset-password", resetPassword);
  *       401:
  *         description: Không có quyền truy cập
  */
-router.get("/me", auth(['User','Renter']), getUserInfo);
+router.get("/me", auth(['Admin','User','Renter']), getUserInfo);
 
 /**
  * @swagger
@@ -360,5 +361,25 @@ router.get("/me", auth(['User','Renter']), getUserInfo);
  *         description: Lỗi máy chủ
  */
 router.get('/user/:id', getUserById);
+
+/**
+ * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Lấy danh sách người dùng
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Danh sách người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/users', auth(['Admin']),getAllUsers);
 
 module.exports = router;
