@@ -47,7 +47,7 @@ const auth = require('../middleware/auth');
  *               items:
  *                 $ref: '#/components/schemas/Favorite'
  */
-router.get('/getAll', favoriteController.getFavorites);
+router.get('/getAll',auth(['Admin']), favoriteController.getFavorites);
 
 /**
  * @swagger

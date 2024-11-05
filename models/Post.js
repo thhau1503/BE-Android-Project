@@ -23,8 +23,8 @@ const postSchema = new Schema({
     views: { type: Number, default: 0 }, // Số lượt xem
     status: { 
         type: String, 
-        enum: ['Active', 'Inactive', 'Deleted'], 
-        default: 'Active' 
+        enum: ['Active', 'Inactive', 'Deleted', 'Pending', 'Locked'], 
+        default: 'Pending' 
     }, // Trạng thái tin đăng
 
     createdAt: { type: Date, default: Date.now },

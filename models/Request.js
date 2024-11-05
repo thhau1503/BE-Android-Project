@@ -5,6 +5,8 @@ const requestSchema = new Schema({
     id_user_rent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     id_renter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     id_post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
-});
+    date_time: { type: Date, required: true },
+}, { timestamps: true }
+);
 
 module.exports = mongoose.model('Request', requestSchema);

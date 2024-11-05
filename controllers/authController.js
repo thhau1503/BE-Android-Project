@@ -7,11 +7,11 @@ const { generateOTP } = require("../services/otpService");
 const tempUserStore = new Map();
 
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+  return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, {
+  return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: "7d",
   });
 };
@@ -217,5 +217,25 @@ exports.getUserById = async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server error" });
+  }
+};
+
+
+// Cập nhật role của người dùng thành Renter
+exports.updateUserRoleToRenter = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    user.user_role = 'Renter';
+    await user.save();
+
+    res.json({ msg: 'User role updated to Renter' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
 };
