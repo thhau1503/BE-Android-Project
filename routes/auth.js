@@ -10,7 +10,8 @@ const {
   getUserById,
   updateUserRoleToRenter,
   getAllUsers, 
-  deleteUserById
+  deleteUserById,
+  adminCreateUser
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -402,5 +403,46 @@ router.get('/users', auth(['Admin']),getAllUsers);
  *         description: Lỗi server
  */
 router.delete('/user/:userId', auth(['Admin']),deleteUserById);
+
+/**
+ * @swagger
+ * /api/auth/admin/create-user:
+ *   post:
+ *     summary: Admin tạo người dùng mới
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: Tên người dùng
+ *               password:
+ *                 type: string
+ *                 description: Mật khẩu
+ *               email:
+ *                 type: string
+ *                 description: Email
+ *               phone:
+ *                 type: string
+ *                 description: Số điện thoại
+ *               address:
+ *                 type: string
+ *                 description: Địa chỉ
+ *               user_role:
+ *                 type: string
+ *                 description: Vai trò của người dùng
+ *     responses:
+ *       200:
+ *         description: Người dùng đã được tạo thành công
+ *       400:
+ *         description: Người dùng đã tồn tại
+ *       500:
+ *         description: Lỗi server
+ */
+router.post('/admin/create-user',auth(['Admin']), adminCreateUser);
 
 module.exports = router;

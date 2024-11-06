@@ -18,7 +18,7 @@ exports.createPost = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find().populate("landlord", "username email phone address");
     res.json(posts);
   } catch (err) {
     console.log(err);
