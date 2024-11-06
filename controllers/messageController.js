@@ -6,13 +6,13 @@ exports.createMessage = async (req, res) => {
     const newMessage = new Message(req.body);
     try {
         const savedMessage = await newMessage.save();
-        res.status(200).json(savedMessage);
+        res.status(200).json(savedMessage); 
 
         req.app.get("io").to(req.body.chatId).emit("receiveMessage", savedMessage);
     } catch (err) {
         console.log(err.message);
         if (!res.headersSent) { 
-            res.status(500).json({ message: err.message+'hihii' });
+            res.status(500).json({ message: err.message+ 'hihi' });
         }
     }
 };
