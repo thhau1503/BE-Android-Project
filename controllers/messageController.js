@@ -3,25 +3,18 @@ const Message = require('../models/Message');
 
 //Tạo tin nhắn mới
 exports.createMessage = async (req, res) => {
-    const io = req.app.get('socketio');
     const newMessage = new Message(req.body);
-    
     try {
-        const savedMessage = await newMessage.save();
-        
-        io.to(savedMessage.chatId).emit('new_message', {
-            _id: savedMessage._id,
-            chatId: savedMessage.chatId,
-            sender: savedMessage.sender,
-            content: savedMessage.content,
-        });
-        
-        res.status(200).json(savedMessage);
+      const savedMessage = await newMessage.save();
+      res.status(200).json(savedMessage);
+  
+      req.app.get("io").to(req.body.chatId).emit("receiveMessage", savedMessage);
     } catch (err) {
-        console.log(err.message);
-        res.status(500).json({ message: err.message });
+      console.log(err.message);
+      res.status(500).json({ message: err.message });
     }
-}
+  };
+  
 
 
 //Lấy tin nhắn theo id
