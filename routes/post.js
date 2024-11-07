@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require("../middleware/auth");
 const postController = require('../controllers/postController');
 
 /**
@@ -197,7 +198,7 @@ const postController = require('../controllers/postController');
  *       400:
  *         description: Bad request
  */
-router.post('/create', postController.createPost);
+router.post('/create', auth(['Admin','Renter']) ,postController.createPost);
 
 /**
  * @swagger
@@ -217,7 +218,7 @@ router.post('/create', postController.createPost);
  *       500:
  *         description: Lỗi server
  */
-router.get('/getPendingPost', postController.getPendingPosts);
+router.get('/getPendingPost',auth(['Admin']), postController.getPendingPosts);
 
 /**
  * @swagger
@@ -257,7 +258,7 @@ router.get('/getActivePost', postController.getActivePosts);
  *       500:
  *         description: Lỗi server
  */
-router.get('/getDeletedPost', postController.getSoftDeletedPosts);
+router.get('/getDeletedPost',auth(['Admin']), postController.getSoftDeletedPosts);
 
 /**
  * @swagger
@@ -284,7 +285,7 @@ router.get('/getDeletedPost', postController.getSoftDeletedPosts);
  *       500:
  *         description: Lỗi server
  */
-router.put('/:postId/activate', postController.activatePost);
+router.put('/:postId/activate', auth(['Admin']), postController.activatePost);
 
 /**
  * @swagger
@@ -311,7 +312,7 @@ router.put('/:postId/activate', postController.activatePost);
  *       500:
  *         description: Lỗi server
  */
-router.put('/:postId/delete', postController.softDeletePost);
+router.put('/:postId/delete',auth(['Admin']), postController.softDeletePost);
 
 /**
  * @swagger
