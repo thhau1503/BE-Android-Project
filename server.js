@@ -26,7 +26,7 @@ io.on('connection', (socket) => {
 
     socket.on("joinChat", (chatId) => {
         socket.join(chatId);
-        console.log(`User joined chat: ${chatId}`);
+        console.log(`User joined chat: ${chatId} with id: ${socket.id}`);
       });
 
     socket.on('disconnect', () => {

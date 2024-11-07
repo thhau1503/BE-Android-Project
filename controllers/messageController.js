@@ -1,18 +1,23 @@
 const { find } = require('../models/Chat');
 const Message = require('../models/Message');
 
-//Tạo tin nhắn mới
+// Tạo tin nhắn mới
 exports.createMessage = async (req, res) => {
     const newMessage = new Message(req.body);
+
     try {
         const savedMessage = await newMessage.save();
-        res.status(200).json(savedMessage); 
+        res.status(200).json(savedMessage);
 
-        req.app.get("io").to(req.body.chatId).emit("receiveMessage", savedMessage);
+        // Emit the saved message to the specific chat room
+        const io = req.app.get('socketio');
+        if (io && req.body.chatId) {
+            io.to(req.body.chatId).emit('receiveMessage', savedMessage);
+        }
     } catch (err) {
-        console.log(err.message);
-        if (!res.headersSent) { 
-            res.status(500).json({ message: err.message+ 'hihi' });
+        console.error('Error saving message:', err);
+        if (!res.headersSent) {
+            res.status(500).json({ message: err.message + 'hihi' });
         }
     }
 };

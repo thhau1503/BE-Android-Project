@@ -285,7 +285,8 @@ exports.adminCreateUser = async (req, res) => {
       email,
       phone,
       address,
-      user_role: user_role || 'User' 
+      user_role: user_role || 'User', 
+      avatar: avatar || 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg'
     });
 
     await user.save();
