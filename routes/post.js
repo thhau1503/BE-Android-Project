@@ -201,6 +201,120 @@ router.post('/create', postController.createPost);
 
 /**
  * @swagger
+ * /api/post/getPendingPost:
+ *   get:
+ *     summary: Lấy các bài đăng có trạng thái "Pending"
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng có trạng thái "Pending"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getPendingPost', postController.getPendingPosts);
+
+/**
+ * @swagger
+ * /api/post/getActivePost:
+ *   get:
+ *     summary: Lấy các bài đăng có trạng thái "Active"
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng có trạng thái "Active"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getActivePost', postController.getActivePosts);
+
+/**
+ * @swagger
+ * /api/post/getDeletedPost:
+ *   get:
+ *     summary: Lấy các bài đăng có trạng thái "Deleted"
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng có trạng thái "Deleted"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getDeletedPost', postController.getSoftDeletedPosts);
+
+/**
+ * @swagger
+ * /api/post/{postId}/activate:
+ *   put:
+ *     summary: Chuyển trạng thái bài viết thành "Active"
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của bài viết
+ *     responses:
+ *       200:
+ *         description: Trạng thái bài viết đã được cập nhật thành "Active"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       404:
+ *         description: Không tìm thấy bài viết
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:postId/activate', postController.activatePost);
+
+/**
+ * @swagger
+ * /api/post/{postId}/delete:
+ *   put:
+ *     summary: Chuyển trạng thái bài viết thành "Deleted"
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của bài viết
+ *     responses:
+ *       200:
+ *         description: Trạng thái bài viết đã được cập nhật thành "Deleted"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       404:
+ *         description: Không tìm thấy bài viết
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:postId/delete', postController.softDeletePost);
+
+/**
+ * @swagger
  * /api/post/top-views:
  *   get:
  *     summary: Lấy ra 10 bài post có nhiều lượt xem nhất
@@ -467,5 +581,6 @@ router.get('/room-type/:roomType', postController.getPostsByRoomType);
  *         description: Lỗi máy chủ
  */
 router.get('/district/:district', postController.getPostsByDistrict);
+
 
 module.exports = router;
