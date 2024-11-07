@@ -128,3 +128,76 @@ exports.getRoomTypes = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Lấy danh sách các bài đăng đang hoạt động
+exports.getActivePosts = async (req, res) => {
+  try {
+    const activePosts = await Post.find({ status: 'Active' });
+    res.status(200).json(activePosts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Lấy danh sách các bài đăng đang chờ duyệt
+exports.getPendingPosts = async (req, res) => {
+  try {
+    const activePosts = await Post.find({ status: 'Pending' });
+    res.status(200).json(activePosts);  
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Lấy danh sách các bài đăng đã bị xoá mềm
+exports.getSoftDeletedPosts = async (req, res) => {
+  try {
+    const activePosts = await Post.find({ status: 'Deleted' });
+    res.status(200).json(activePosts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Chuyển trạng thái bài viết thành "Active"
+exports.activatePost = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
+
+    post.status = 'Active';
+    await post.save();
+
+    res.status(200).json({ msg: 'Post status updated to Active', post });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Chuyển trạng thái bài viết thành "Deleted"
+exports.softDeletePost = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
+
+    post.status = 'Deleted';
+    await post.save();
+
+    res.status(200).json({ msg: 'Post status updated to Deleted', post });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
