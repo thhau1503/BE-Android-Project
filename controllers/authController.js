@@ -268,7 +268,7 @@ exports.deleteUserById = async (req, res) => {
 
 //Tạo người dùng cho admin
 exports.adminCreateUser = async (req, res) => {
-  const { username, password, email, phone, address, user_role } = req.body;
+  const { username, password, email, phone, address, user_role, avatar } = req.body;
 
   try {
     let user = await User.findOne({ email });
