@@ -162,14 +162,7 @@ exports.getUserInfo = async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      user_role: user.user_role,
-      phone: user.phone,
-      address: user.address,
-    });
+    res.status(200).json(user);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -237,5 +230,68 @@ exports.updateUserRoleToRenter = async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
+  }
+};
+
+//Lấy danh sách người dùng
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    res.status(200).json(users);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+//Xóa người dùng theo id
+exports.deleteUserById = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    if(user.user_role == 'Admin')
+    {
+      return res.status(403).json({ msg: 'Cannot delete user with role Admin'});
+    }
+    await User.findByIdAndDelete(userId);
+    res.json({ msg: 'User deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+//Tạo người dùng cho admin
+exports.adminCreateUser = async (req, res) => {
+  const { username, password, email, phone, address, user_role } = req.body;
+
+  try {
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: 'User already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user = new User({
+      username,
+      password: hashedPassword,
+      email,
+      phone,
+      address,
+      user_role: user_role || 'User' 
+    });
+
+    await user.save();
+    res.json({ msg: 'User created successfully', user });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };

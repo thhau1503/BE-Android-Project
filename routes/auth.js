@@ -8,7 +8,10 @@ const {
   resetPassword,
   updateUser,
   getUserById,
-  updateUserRoleToRenter
+  updateUserRoleToRenter,
+  getAllUsers, 
+  deleteUserById,
+  adminCreateUser
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -98,6 +101,8 @@ router.post("/register", register);
  *               phone:
  *                 type: string
  *               address:
+ *                 type: string
+ *               password:
  *                 type: string
  *             required:
  *               - username
@@ -323,16 +328,11 @@ router.post("/reset-password", resetPassword);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                 email:
- *                   type: string
+ *               $ref: '#/components/schemas/User'
  *       401:
  *         description: Không có quyền truy cập
  */
-router.get("/me", auth(['User','Renter']), getUserInfo);
+router.get("/me", auth(['Admin','User','Renter']), getUserInfo);
 
 /**
  * @swagger
@@ -360,5 +360,89 @@ router.get("/me", auth(['User','Renter']), getUserInfo);
  *         description: Lỗi máy chủ
  */
 router.get('/user/:id', getUserById);
+
+/**
+ * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Lấy danh sách người dùng
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Danh sách người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/users', auth(['Admin']),getAllUsers);
+
+/**
+ * @swagger
+ * /api/auth/user/{userId}:
+ *   delete:
+ *     summary: Xóa người dùng theo ID
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng
+ *     responses:
+ *       200:
+ *         description: Người dùng đã được xóa thành công
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *       500:
+ *         description: Lỗi server
+ */
+router.delete('/user/:userId', auth(['Admin']),deleteUserById);
+
+/**
+ * @swagger
+ * /api/auth/admin/create-user:
+ *   post:
+ *     summary: Admin tạo người dùng mới
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: Tên người dùng
+ *               password:
+ *                 type: string
+ *                 description: Mật khẩu
+ *               email:
+ *                 type: string
+ *                 description: Email
+ *               phone:
+ *                 type: string
+ *                 description: Số điện thoại
+ *               address:
+ *                 type: string
+ *                 description: Địa chỉ
+ *               user_role:
+ *                 type: string
+ *                 description: Vai trò của người dùng
+ *     responses:
+ *       200:
+ *         description: Người dùng đã được tạo thành công
+ *       400:
+ *         description: Người dùng đã tồn tại
+ *       500:
+ *         description: Lỗi server
+ */
+router.post('/admin/create-user',auth(['Admin']), adminCreateUser);
 
 module.exports = router;

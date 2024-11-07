@@ -19,7 +19,7 @@ module.exports = function (requireRole = []) {
             console.log (req.user);
 
             if(requireRole.length > 0 && !requireRole.includes(req.user.user_role)){
-                return res.status(401).json({ msg: 'You dont have permission' + req.user.user_role});
+                return res.status(401).json({ msg: 'You dont have permission'});
             }
 
             next();

@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "http://localhost:3000", 
+        origin: ["http://localhost:3000","http://localhost:3001"], 
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -20,15 +20,14 @@ const io = socketIo(server, {
 io.on('connection', (socket) => {
     console.log('New client connected: ' + socket.id);
 
-    socket.on('join_room', (chatId) => {
-        socket.join(chatId);
-        console.log(`User joined room: ${chatId}`);
-    });
+    socket.on("sendMessage", (messagedata) => {
+        io.to(messagedata.chatId).emit("receiveMessage", messagedata);
+    })
 
-    socket.on('leave_room', (chatId) => {
-        socket.leave(chatId);
-        console.log(`User left room: ${chatId}`);
-    });
+    socket.on("joinChat", (chatId) => {
+        socket.join(chatId);
+        console.log(`User joined chat: ${chatId}`);
+      });
 
     socket.on('disconnect', () => {
         console.log('Client disconnected');

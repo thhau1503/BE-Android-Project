@@ -18,7 +18,7 @@ exports.createPost = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find().populate("landlord", "username email phone address");
     res.json(posts);
   } catch (err) {
     console.log(err);
@@ -28,7 +28,7 @@ exports.getAllPosts = async (req, res) => {
 
 exports.getPostById = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(req.params.id).populate("landlord", "username email phone address");
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json(post);
   } catch (err) {
