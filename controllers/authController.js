@@ -171,7 +171,7 @@ exports.getUserInfo = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
-  const { username, password, email, phone, address } = req.body;
+  const { username, password, email, phone, address, avatar } = req.body;
 
   try {
     let user = await User.findById(id);
@@ -183,6 +183,7 @@ exports.updateUser = async (req, res) => {
     if (email) user.email = email;
     if (phone) user.phone = phone;
     if (address) user.address = address;
+    if (avatar) user.avatar = avatar;
     if (password) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
