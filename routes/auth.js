@@ -435,6 +435,9 @@ router.delete('/user/:userId', auth(['Admin']),deleteUserById);
  *               user_role:
  *                 type: string
  *                 description: Vai trò của người dùng
+ *               avatar:
+ *                 type: string
+ *                 description: Avatar của người dùng
  *     responses:
  *       200:
  *         description: Người dùng đã được tạo thành công
