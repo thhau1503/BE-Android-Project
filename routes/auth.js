@@ -102,6 +102,8 @@ router.post("/register", register);
  *                 type: string
  *               address:
  *                 type: string
+ *               avatar:
+ *                 type: string
  *               password:
  *                 type: string
  *             required:
@@ -109,6 +111,8 @@ router.post("/register", register);
  *               - email
  *               - phone
  *               - address
+ *               - avatar
+ *               - password
  *     responses:
  *       200:
  *         description: Cập nhật thành công

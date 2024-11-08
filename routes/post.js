@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require("../middleware/auth");
 const postController = require('../controllers/postController');
 
 /**
@@ -197,7 +198,121 @@ const postController = require('../controllers/postController');
  *       400:
  *         description: Bad request
  */
-router.post('/create', postController.createPost);
+router.post('/create', auth(['Admin','Renter']) ,postController.createPost);
+
+/**
+ * @swagger
+ * /api/post/getPendingPost:
+ *   get:
+ *     summary: Lấy các bài đăng có trạng thái "Pending"
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng có trạng thái "Pending"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getPendingPost',auth(['Admin']), postController.getPendingPosts);
+
+/**
+ * @swagger
+ * /api/post/getActivePost:
+ *   get:
+ *     summary: Lấy các bài đăng có trạng thái "Active"
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng có trạng thái "Active"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getActivePost', postController.getActivePosts);
+
+/**
+ * @swagger
+ * /api/post/getDeletedPost:
+ *   get:
+ *     summary: Lấy các bài đăng có trạng thái "Deleted"
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng có trạng thái "Deleted"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getDeletedPost',auth(['Admin']), postController.getSoftDeletedPosts);
+
+/**
+ * @swagger
+ * /api/post/{postId}/activate:
+ *   put:
+ *     summary: Chuyển trạng thái bài viết thành "Active"
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của bài viết
+ *     responses:
+ *       200:
+ *         description: Trạng thái bài viết đã được cập nhật thành "Active"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       404:
+ *         description: Không tìm thấy bài viết
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:postId/activate', auth(['Admin']), postController.activatePost);
+
+/**
+ * @swagger
+ * /api/post/{postId}/delete:
+ *   put:
+ *     summary: Chuyển trạng thái bài viết thành "Deleted"
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của bài viết
+ *     responses:
+ *       200:
+ *         description: Trạng thái bài viết đã được cập nhật thành "Deleted"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       404:
+ *         description: Không tìm thấy bài viết
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:postId/delete',auth(['Admin']), postController.softDeletePost);
 
 /**
  * @swagger
@@ -467,5 +582,6 @@ router.get('/room-type/:roomType', postController.getPostsByRoomType);
  *         description: Lỗi máy chủ
  */
 router.get('/district/:district', postController.getPostsByDistrict);
+
 
 module.exports = router;
