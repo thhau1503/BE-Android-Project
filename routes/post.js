@@ -202,6 +202,33 @@ router.post('/create', auth(['Admin','Renter']) ,postController.createPost);
 
 /**
  * @swagger
+ * /api/post/landlord/{landlordId}:
+ *   get:
+ *     summary: Lấy danh sách bài đăng theo ID của chủ nhà
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: landlordId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của chủ nhà
+ *     responses:
+ *       200:
+ *         description: Danh sách bài đăng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/landlord/:landlordId', postController.getPostsByLandlordId);
+
+/**
+ * @swagger
  * /api/post/getPendingPost:
  *   get:
  *     summary: Lấy các bài đăng có trạng thái "Pending"
@@ -313,6 +340,33 @@ router.put('/:postId/activate', auth(['Admin']), postController.activatePost);
  *         description: Lỗi server
  */
 router.put('/:postId/delete',auth(['Admin']), postController.softDeletePost);
+
+/**
+ * @swagger
+ * /api/post/{postId}/lock:
+ *   put:
+ *     summary: Chuyển trạng thái bài viết thành "Lock (sau khi đã có người đặt cọc)"
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của bài viết
+ *     responses:
+ *       200:
+ *         description: Trạng thái bài viết đã được cập nhật thành "Lock"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       404:
+ *         description: Không tìm thấy bài viết
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:postId/lock', auth(['Renter']), postController.blockedPost);
 
 /**
  * @swagger

@@ -201,3 +201,32 @@ exports.softDeletePost = async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 };
+
+exports.blockedPost = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
+
+    post.status = 'Locked';
+    await post.save();
+
+    res.status(200).json({ msg: 'Post status updated to Locked', post });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+//Lấy bài post theo id của chủ nhà
+exports.getPostsByLandlordId = async (req, res) => {
+  try {
+    const posts = await Post.find({ landlord: req.params.landlordId });
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
