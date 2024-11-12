@@ -15,9 +15,6 @@ const contractSchema = new Schema({
     renewal_terms: { type: String, required: true },
     termination_conditions: { type: String, required: true },
     additional_clauses: { type: String, required: true },
-    id_renter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    id_post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
-    id_user_rent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
 module.exports = mongoose.model('Contract', contractSchema);
