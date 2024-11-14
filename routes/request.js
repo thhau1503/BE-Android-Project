@@ -60,6 +60,60 @@ router.post('/create', requestController.createRequest);
 
 /**
  * @swagger
+ * /api/request/{id}/accept:
+ *   put:
+ *     summary: Cập nhật trạng thái yêu cầu thành Accepted
+ *     tags: [Requests]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của yêu cầu
+ *     responses:
+ *       200:
+ *         description: Trạng thái yêu cầu đã được cập nhật thành Accepted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Request'
+ *       404:
+ *         description: Không tìm thấy yêu cầu
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:id/accept', requestController.acceptRequest);
+
+/**
+ * @swagger
+ * /api/request/{id}/decline:
+ *   put:
+ *     summary: Cập nhật trạng thái yêu cầu thành Declined
+ *     tags: [Requests]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của yêu cầu
+ *     responses:
+ *       200:
+ *         description: Trạng thái yêu cầu đã được cập nhật thành Declined
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Request'
+ *       404:
+ *         description: Không tìm thấy yêu cầu
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:id/decline', requestController.declineRequest);
+
+/**
+ * @swagger
  * /api/request/getAll:
  *   get:
  *     summary: Lấy tất cả yêu cầu
@@ -77,6 +131,33 @@ router.post('/create', requestController.createRequest);
  *         description: Lỗi server
  */
 router.get('/getAll', requestController.getAllRequests);
+
+/**
+ * @swagger
+ * /api/request/renter/{renterId}:
+ *   get:
+ *     summary: Lấy danh sách yêu cầu theo ID của người thuê
+ *     tags: [Requests]
+ *     parameters:
+ *       - in: path
+ *         name: renterId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người thuê
+ *     responses:
+ *       200:
+ *         description: Danh sách yêu cầu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Request'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/renter/:renterId', requestController.getRequestsByRenterId);
 
 /**
  * @swagger
