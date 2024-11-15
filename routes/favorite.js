@@ -51,6 +51,35 @@ router.get('/getAll',auth(['Admin']), favoriteController.getFavorites);
 
 /**
  * @swagger
+ * /api/favorite/user/{userId}:
+ *   get:
+ *     summary: Lấy danh sách yêu thích theo ID người dùng
+ *     tags: [Favorites]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng
+ *     responses:
+ *       200:
+ *         description: Danh sách mục yêu thích của người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Favorite'
+ *       404:
+ *         description: Không tìm thấy mục yêu thích cho người dùng này
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/user/:userId', favoriteController.getFavoritesByUserIdInput);
+
+/**
+ * @swagger
  * /api/favorite/user:
  *   get:
  *     summary: Lấy danh mục yêu thích theo ID người dùng hiện đăng nhập

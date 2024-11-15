@@ -68,10 +68,20 @@ exports.deleteNotification = async (req, res) => {
 //Lấy thông báo theo id người dùng hiện tại
 exports.getNotificationByUserId = async (req, res) => {
     try {
-        const notifications = await Notification.find({ id_user: req.user.id });
+        const notifications = await Notification.find({ id_user: req.user.id }).populate("id_user", "username email avatar");
         res.status(200).json(notifications);
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: err.message });
     }
 }
+
+exports.getNotificationByUserId = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ id_user: req.params.userId }).populate("id_user", "username email avatar");
+        res.status(200).json(notifications);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: err.message });
+    }
+};

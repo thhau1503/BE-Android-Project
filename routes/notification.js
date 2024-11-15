@@ -80,6 +80,35 @@ router.get('/', notificationController.getNotifications);
 
 /**
  * @swagger
+ * /api/notification/user/{userId}:
+ *   get:
+ *     summary: Lấy thông báo theo ID người dùng
+ *     tags: [Notifications]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng
+ *     responses:
+ *       200:
+ *         description: Danh sách thông báo của người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Notification'
+ *       404:
+ *         description: Không tìm thấy thông báo cho người dùng này
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/user/:userId', notificationController.getNotificationByUserId);
+
+/**
+ * @swagger
  * /api/notification/user:
  *   get:
  *     summary: Lấy thông báo theo ID người dùng hiện tại
