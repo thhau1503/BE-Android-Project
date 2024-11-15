@@ -17,6 +17,12 @@ const io = socketIo(server, {
     }
 });
 
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+}));
+
 io.on('connection', (socket) => {
     console.log('New client connected: ' + socket.id);
 
@@ -59,6 +65,7 @@ const chatRoutes = require('./routes/chat');
 const requestRoutes = require('./routes/request');
 const commentRoutes = require('./routes/comment');
 const messageRoutes = require('./routes/message');
+const orderRoutes = require('./routes/order');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -68,6 +75,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/request', requestRoutes);
 app.use('/api/comment', commentRoutes);
 app.use('/api/message', messageRoutes);
+app.use('/api/order', orderRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
