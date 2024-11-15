@@ -66,3 +66,16 @@ exports.deleteFavorite = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getFavoritesByUserIdInput = async (req, res) => {
+  try {
+    const favorites = await Favorite.find({ id_user_rent: req.params.userId })
+    if (!favorites.length)
+      return res
+        .status(404)
+        .json({ message: "No favorites found for this user" });
+    res.status(200).json(favorites);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
