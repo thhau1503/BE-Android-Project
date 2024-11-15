@@ -19,7 +19,7 @@ exports.createNotification = async (req, res) => {
 // Lấy tất cả thông báo
 exports.getNotifications = async (req, res) => {
     try {
-        const notifications = await Notification.find().populate("id_user", "username email");
+        const notifications = await Notification.find().populate("id_user", "username email avatar");
         res.status(200).json(notifications);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -29,7 +29,7 @@ exports.getNotifications = async (req, res) => {
 // Lấy thông báo theo ID
 exports.getNotificationById = async (req, res) => {
     try {
-        const notification = await Notification.findById(req.params.id);
+        const notification = await Notification.findById(req.params.id).populate("id_user", "username email avatar");
         if (!notification) {
             return res.status(404).json({ msg: 'Notification not found' });
         }
