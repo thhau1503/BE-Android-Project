@@ -66,6 +66,7 @@ const requestRoutes = require('./routes/request');
 const commentRoutes = require('./routes/comment');
 const messageRoutes = require('./routes/message');
 const orderRoutes = require('./routes/order');
+const reportRoutes = require('./routes/report');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -76,6 +77,7 @@ app.use('/api/request', requestRoutes);
 app.use('/api/comment', commentRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api/report', reportRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
