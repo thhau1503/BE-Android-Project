@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require("../middleware/auth");
 const postController = require('../controllers/postController');
-
+const { upload } = require('../config/cloudinaryConfig');
 /**
  * @swagger
  * tags:
@@ -20,7 +20,7 @@ const postController = require('../controllers/postController');
  *         - address
  *         - city
  *         - district
- *         - geoLocation
+ *         - ward
  *       properties:
  *         address:
  *           type: string
@@ -33,16 +33,7 @@ const postController = require('../controllers/postController');
  *           description: Quận/Huyện
  *         ward:
  *           type: string
- *           description: Phường/Xã (không bắt buộc)
- *         geoLocation:
- *           type: object
- *           properties:
- *             latitude:
- *               type: number
- *               description: Vĩ độ
- *             longitude:
- *               type: number
- *               description: Kinh độ
+ *           description: Phường/Xã 
  *     Amenity:
  *       type: object
  *       properties:
@@ -76,6 +67,9 @@ const postController = require('../controllers/postController');
  *         cleaning:
  *           type: number
  *           description: Chi phí dọn dẹp
+ *         security:
+ *           type: number
+ *           description: Chi phí bảo vệ
  *     Post:
  *       type: object
  *       required:
@@ -87,6 +81,7 @@ const postController = require('../controllers/postController');
  *         - roomType
  *         - size
  *         - images
+ *         - videos
  *       properties:
  *         title:
  *           type: string
@@ -119,13 +114,27 @@ const postController = require('../controllers/postController');
  *         images:
  *           type: array
  *           items:
- *             type: string
+ *             type: object
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 description: URL của ảnh
+ *               public_id:
+ *                 type: string
+ *                 description: Public ID của ảnh
  *           description: Danh sách ảnh
  *         videos:
  *           type: array
  *           items:
- *             type: string
- *           description: Danh sách video (nếu có)
+ *             type: object
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 description: URL của video
+ *               public_id:
+ *                 type: string
+ *                 description: Public ID của video
+ *           description: Danh sách video
  *         averageRating:
  *           type: number
  *           description: Điểm đánh giá trung bình
@@ -134,7 +143,7 @@ const postController = require('../controllers/postController');
  *           description: Số lượt xem
  *         status:
  *           type: string
- *           enum: ['Active', 'Inactive', 'Deleted']
+ *           enum: ['Pending','Active', 'Inactive', 'Deleted', 'Locked']
  *           description: Trạng thái của bài viết
  */
 
@@ -142,63 +151,71 @@ const postController = require('../controllers/postController');
  * @swagger
  * /api/post/create:
  *   post:
- *     summary: Tạo một post mới
+ *     summary: Tạo bài đăng mới
  *     tags: [Posts]
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
  *               title:
  *                 type: string
+ *                 description: Tiêu đề bài đăng
  *               description:
  *                 type: string
+ *                 description: Mô tả chi tiết
  *               price:
  *                 type: number
+ *                 description: Giá thuê
  *               location:
- *                 $ref: '#/components/schemas/Location'
+ *                 type: object
+ *                 description: Địa điểm
  *               landlord:
  *                 type: string
- *                 description: The landlord id
+ *                 description: ID của người cho thuê
  *               roomType:
  *                 type: string
- *                 enum: [Single, Shared, Apartment, Dormitory]
+ *                 enum: ['Single', 'Double', 'Shared', 'Apartment', 'Dormitory']
+ *                 description: Loại phòng
  *               size:
  *                 type: number
+ *                 description: Diện tích phòng (m2)
  *               availability:
  *                 type: boolean
+ *                 description: Tình trạng còn trống hay đã thuê
  *               amenities:
- *                 $ref: '#/components/schemas/Amenity'
+ *                 type: object
+ *                 description: Tiện nghi
  *               additionalCosts:
- *                 $ref: '#/components/schemas/AdditionalCost'
+ *                 type: object
+ *                 description: Chi phí bổ sung
  *               images:
  *                 type: array
  *                 items:
  *                   type: string
+ *                   format: binary
+ *                   description: Danh sách ảnh
  *               videos:
  *                 type: array
  *                 items:
  *                   type: string
- *               averageRating:
- *                 type: number
- *               views:
- *                 type: number
- *               status:
- *                 type: string
- *                 enum: [Active, Inactive, Deleted]
+ *                   format: binary
+ *                   description: Danh sách video
  *     responses:
  *       201:
- *         description: The post was successfully created
+ *         description: Bài đăng đã được tạo thành công
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Post'
  *       400:
- *         description: Bad request
+ *         description: Lỗi yêu cầu không hợp lệ
+ *       500:
+ *         description: Lỗi server
  */
-router.post('/create', auth(['Admin','Renter']) ,postController.createPost);
+router.post('/create', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), postController.createPost);
 
 /**
  * @swagger
@@ -525,36 +542,80 @@ router.get('/:id', postController.getPostById);
  * @swagger
  * /api/post/{id}:
  *   put:
- *     summary: Cập nhật thông tin bài viết theo id
+ *     summary: Cập nhật bài đăng
  *     tags: [Posts]
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: The post id
+ *         description: ID của bài đăng
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Post'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Tiêu đề bài đăng
+ *               description:
+ *                 type: string
+ *                 description: Mô tả chi tiết
+ *               price:
+ *                 type: number
+ *                 description: Giá thuê
+ *               location:
+ *                 type: object
+ *                 description: Địa điểm
+ *               landlord:
+ *                 type: string
+ *                 description: ID của người cho thuê
+ *               roomType:
+ *                 type: string
+ *                 enum: ['Single', 'Double', 'Shared', 'Apartment', 'Dormitory']
+ *                 description: Loại phòng
+ *               size:
+ *                 type: number
+ *                 description: Diện tích phòng (m2)
+ *               availability:
+ *                 type: boolean
+ *                 description: Tình trạng còn trống hay đã thuê
+ *               amenities:
+ *                 type: object
+ *                 description: Tiện nghi
+ *               additionalCosts:
+ *                 type: object
+ *                 description: Chi phí bổ sung
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                   description: Danh sách ảnh
+ *               videos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                   description: Danh sách video
  *     responses:
  *       200:
- *         description: The post was updated
+ *         description: Bài đăng đã được cập nhật thành công
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Post'
  *       400:
- *         description: Bad request
+ *         description: Lỗi yêu cầu không hợp lệ
  *       404:
- *         description: The post was not found
+ *         description: Không tìm thấy bài đăng
  *       500:
- *         description: Internal server error
+ *         description: Lỗi server
  */
-router.put('/:id', postController.updatePost);
+router.put('/:id', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), postController.updatePost);
 
 /**
  * @swagger

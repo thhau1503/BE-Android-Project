@@ -1,18 +1,43 @@
 const mongoose = require("mongoose");
 const Post = require("../models/Post");
-
+const { cloudinary } = require('../config/cloudinaryConfig');
+// Tạo bài đăng mới
 exports.createPost = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.body.landlord)) {
-      return res.status(400).json({ message: "ID not found" });
-    }
+    const { title, description, price, location, landlord, roomType, size, amenities, additionalCosts } = req.body;
+    
+    const parsedLocation = JSON.parse(location);
+    const parsedAmenities = JSON.parse(amenities);
+    const parsedAdditionalCosts = JSON.parse(additionalCosts);
 
-    const post = new Post(req.body);
-    await post.save();
-    res.status(201).json(post);
+    const images = req.files.images ? req.files.images.map(file => ({
+      url: file.path,
+      public_id: file.filename
+    })) : [];
+
+    const videos = req.files.videos ? req.files.videos.map(file => ({
+      url: file.path,
+      public_id: file.filename
+    })) : [];
+
+    const newPost = new Post({
+      title,
+      description,
+      price,
+      location: parsedLocation,
+      landlord,
+      roomType,
+      size,
+      amenities: parsedAmenities,
+      additionalCosts: parsedAdditionalCosts,
+      images,
+      videos
+    });
+
+    const savedPost = await newPost.save();
+    res.status(201).json(savedPost);
   } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ error: err });
   }
 };
 
@@ -21,7 +46,7 @@ exports.getAllPosts = async (req, res) => {
     const posts = await Post.find().populate("landlord", "username email phone address");
     res.json(posts);
   } catch (err) {
-    console.log(err);
+    console.log("Lỗi" + err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -37,14 +62,88 @@ exports.getPostById = async (req, res) => {
 };
 
 exports.updatePost = async (req, res) => {
+  const { id } = req.params;
+  const { title, description, price, location, landlord, roomType, size, amenities, additionalCosts } = req.body;
+
   try {
-    const post = await Post.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+    let post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
+
+    // Xử lý các trường dữ liệu cơ bản
+    if (title) post.title = title;
+    if (description) post.description = description;
+    if (price) post.price = price;
+    if (landlord) post.landlord = landlord;
+    if (roomType) post.roomType = roomType;
+    if (size) post.size = size;
+
+    // Xử lý các trường JSON
+    if (location) {
+      try {
+        post.location = JSON.parse(location);
+      } catch (error) {
+        console.error('Location parsing error:', error);
+        return res.status(400).json({ msg: 'Invalid location format' });
+      }
+    }
+
+    if (amenities) {
+      try {
+        post.amenities = JSON.parse(amenities);
+      } catch (error) {
+        console.error('Amenities parsing error:', error);
+        return res.status(400).json({ msg: 'Invalid amenities format' });
+      }
+    }
+
+    if (additionalCosts) {
+      try {
+        post.additionalCosts = JSON.parse(additionalCosts);
+      } catch (error) {
+        console.error('Additional costs parsing error:', error);
+        return res.status(400).json({ msg: 'Invalid additional costs format' });
+      }
+    }
+
+    // Xử lý images
+    if (req.files && req.files.images) {
+      try {
+        const newImages = req.files.images.map(file => ({
+          url: file.path,
+          public_id: file.filename
+        }));
+        post.images = [...post.images, ...newImages];
+      } catch (error) {
+        console.error('Image processing error:', error);
+        return res.status(400).json({ msg: 'Error processing images' });
+      }
+    }
+
+    // Xử lý videos
+    if (req.files && req.files.videos) {
+      try {
+        const newVideos = req.files.videos.map(file => ({
+          url: file.path,
+          public_id: file.filename
+        }));
+        post.videos = [...post.videos, ...newVideos];
+      } catch (error) {
+        console.error('Video processing error:', error);
+        return res.status(400).json({ msg: 'Error processing videos' });
+      }
+    }
+
+    const updatedPost = await post.save();
+    res.json({
+      msg: 'Post updated successfully',
+      post: updatedPost
     });
-    if (!post) return res.status(404).json({ message: "Post not found" });
-    res.json(post);
+
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Update post error:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 };
 
@@ -144,7 +243,7 @@ exports.getActivePosts = async (req, res) => {
 exports.getPendingPosts = async (req, res) => {
   try {
     const activePosts = await Post.find({ status: 'Pending' });
-    res.status(200).json(activePosts);  
+    res.status(200).json(activePosts);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error' });

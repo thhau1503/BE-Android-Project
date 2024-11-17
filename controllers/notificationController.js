@@ -19,7 +19,14 @@ exports.createNotification = async (req, res) => {
 // Lấy tất cả thông báo
 exports.getNotifications = async (req, res) => {
     try {
-        const notifications = await Notification.find().populate("id_user", "username email avatar");
+        const notifications = await Notification.find().populate({
+            path: "id_user",
+            select: "username email phone",
+            populate: {
+              path: "avatar",
+              select: "url"
+            }
+          });
         res.status(200).json(notifications);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -29,7 +36,14 @@ exports.getNotifications = async (req, res) => {
 // Lấy thông báo theo ID
 exports.getNotificationById = async (req, res) => {
     try {
-        const notification = await Notification.findById(req.params.id).populate("id_user", "username email avatar");
+        const notification = await Notification.findById(req.params.id).populate({
+            path: "id_user",
+            select: "username email phone",
+            populate: {
+              path: "avatar",
+              select: "url"
+            }
+          });
         if (!notification) {
             return res.status(404).json({ msg: 'Notification not found' });
         }
@@ -68,7 +82,14 @@ exports.deleteNotification = async (req, res) => {
 //Lấy thông báo theo id người dùng hiện tại
 exports.getNotificationByUserId = async (req, res) => {
     try {
-        const notifications = await Notification.find({ id_user: req.user.id }).populate("id_user", "username email avatar");
+        const notifications = await Notification.find({ id_user: req.user.id }).populate({
+            path: "id_user",
+            select: "username email phone",
+            populate: {
+              path: "avatar",
+              select: "url"
+            }
+          });
         res.status(200).json(notifications);
     } catch (err) {
         console.log(err);
@@ -78,7 +99,14 @@ exports.getNotificationByUserId = async (req, res) => {
 
 exports.getNotificationByUserId = async (req, res) => {
     try {
-        const notifications = await Notification.find({ id_user: req.params.userId }).populate("id_user", "username email avatar");
+        const notifications = await Notification.find({ id_user: req.params.userId }).populate({
+            path: "id_user",
+            select: "username email phone",
+            populate: {
+              path: "avatar",
+              select: "url"
+            }
+          });
         res.status(200).json(notifications);
     } catch (err) {
         console.log(err);
