@@ -17,6 +17,8 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
+const { upload } = require('../config/cloudinaryConfig');
+
 /**
  * @swagger
  * tags:
@@ -52,6 +54,16 @@ const router = express.Router();
  *         address:
  *           type: string
  *           description: The user's address
+ *         avatar:
+ *           type: object
+ *           properties:
+ *             url:
+ *               type: string
+ *               description: URL of the user's avatar
+ *             public_id:
+ *               type: string
+ *               description: Public ID of the user's avatar
+ *           description: The user's avatar
  */
 
 /**
@@ -76,58 +88,58 @@ router.post("/register", register);
 
 /**
  * @swagger
- * /api/auth/update/{id}:
+ * /api/auth/users/{id}:
  *   put:
  *     summary: Cập nhật thông tin người dùng
  *     tags: [Auth]
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: ID của người dùng cần cập nhật
+ *         description: ID của người dùng
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
  *               username:
  *                 type: string
+ *                 description: The user's username
  *               email:
  *                 type: string
- *               phone:
- *                 type: string
- *               address:
- *                 type: string
- *               avatar:
- *                 type: string
+ *                 description: The user's email
  *               password:
  *                 type: string
- *             required:
- *               - username
- *               - email
- *               - phone
- *               - address
- *               - avatar
- *               - password
+ *                 description: The user's password
+ *               phone:
+ *                 type: string
+ *                 description: The user's phone number
+ *               address:
+ *                 type: string
+ *                 description: The user's address
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: The user's avatar
  *     responses:
  *       200:
- *         description: Cập nhật thành công
+ *         description: Thông tin người dùng đã được cập nhật
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/User'
  *       400:
- *         description: Thông tin cập nhật không hợp lệ
+ *         description: Lỗi yêu cầu không hợp lệ
  *       404:
  *         description: Không tìm thấy người dùng
  *       500:
- *         description: Internal server error
+ *         description: Lỗi server
  */
-router.put("/update/:id", updateUser);
+router.put('/users/:id', upload.single('avatar'), updateUser);
 
 /**
  * @swagger
@@ -440,8 +452,15 @@ router.delete('/user/:userId', auth(['Admin']),deleteUserById);
  *                 type: string
  *                 description: Vai trò của người dùng
  *               avatar:
- *                 type: string
- *                 description: Avatar của người dùng
+ *                 type: object
+ *                 properties:
+ *                   url:
+ *                     type: string
+ *                     description: URL of the user's avatar
+ *                   public_id:
+ *                     type: string
+ *                     description: Public ID of the user's avatar
+ *           description: The user's avatar
  *     responses:
  *       200:
  *         description: Người dùng đã được tạo thành công

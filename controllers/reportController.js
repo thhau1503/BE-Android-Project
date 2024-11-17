@@ -15,7 +15,14 @@ exports.createReport = async (req, res) => {
 exports.getReports = async (req, res) => {
     try {
         const reports = await Report.find()
-            .populate("id_user", "username email phone avatar")
+        .populate({
+            path: "id_user",
+            select: "username email phone",
+            populate: {
+              path: "avatar",
+              select: "url"
+            }
+          })
             .populate({
                 path: "id_post",
                 select: "title description price averageRating views location",
@@ -34,7 +41,14 @@ exports.getReports = async (req, res) => {
 exports.getReportById = async (req, res) => {
     try {
         const report = await Report.findById(req.params.id)
-            .populate("id_user", "username email phone avatar")
+        .populate({
+            path: "id_user",
+            select: "username email phone",
+            populate: {
+              path: "avatar",
+              select: "url"
+            }
+          })
             .populate({
                 path: "id_post",
                 select: "title roomType price averageRating views location",

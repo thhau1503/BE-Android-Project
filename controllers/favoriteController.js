@@ -1,16 +1,31 @@
 const Favorite = require("../models/Favorite");
+const { path } = require("../models/Location");
 
 // Lấy tất cả các mục yêu thích
 exports.getFavorites = async (req, res) => {
   try {
-    const favorites = await Favorite.find()
-      .populate("id_user_rent", "username email")
+    const favorites = await Favorite.find().populate({
+      path: "id_user_rent",
+      select: "username email phone",
+      populate: {
+        path: "avatar",
+        select: "url"
+      }
+    })
       .populate({
         path: "id_post",
         select: "title description price location",
         populate: {
           path: "location",
           select: "address city district ward"
+        },
+        populate: {
+          path: "landlord",
+          select: "username email phone",
+          populate: {
+            path: "avatar",
+            select: "url"
+          }
         }
       });
     res.status(200).json(favorites);
@@ -22,16 +37,29 @@ exports.getFavorites = async (req, res) => {
 // Lấy một mục yêu thích theo ID
 exports.getFavoriteById = async (req, res) => {
   try {
-    const favorite = await Favorite.findById(req.params.id)
-      .populate("id_user_rent", "username email phone avatar")
-      .populate({
-        path: "id_post",
-        select: "title description price location",
+    const favorite = await Favorite.findById(req.params.id).populate({
+      path: "id_user_rent",
+      select: "username email phone",
+      populate: {
+        path: "avatar",
+        select: "url"
+      }
+    }).populate({
+      path: "id_post",
+      select: "title description price location",
+      populate: {
+        path: "location",
+        select: "address city district ward"
+      },
+      populate: {
+        path: "landlord",
+        select: "username email phone",
         populate: {
-          path: "location",
-          select: "address city district ward"
+          path: "avatar",
+          select: "url"
         }
-      });
+      }
+    });
     if (!favorite)
       return res.status(404).json({ message: "Favorite not found" });
     res.status(200).json(favorite);
@@ -50,6 +78,14 @@ exports.getFavoritesByUserId = async (req, res) => {
         populate: {
           path: "location",
           select: "address city district ward"
+        },
+        populate: {
+          path: "landlord",
+          select: "username email phone",
+          populate: {
+            path: "avatar",
+            select: "url"
+          }
         }
       });
     if (!favorites.length)
@@ -93,15 +129,29 @@ exports.deleteFavorite = async (req, res) => {
 
 exports.getFavoritesByUserIdInput = async (req, res) => {
   try {
-    const favorites = await Favorite.find({ id_user_rent: req.params.userId }).populate("id_user_rent", "username email phone avatar")
-      .populate({
-        path: "id_post",
-        select: "title description price location",
+    const favorites = await Favorite.find({ id_user_rent: req.params.userId }).populate({
+      path: "id_user_rent",
+      select: "username email phone",
+      populate: {
+        path: "avatar",
+        select: "url"
+      }
+    }).populate({
+      path: "id_post",
+      select: "title description price location",
+      populate: {
+        path: "location",
+        select: "address city district ward"
+      },
+      populate: {
+        path: "landlord",
+        select: "username email phone",
         populate: {
-          path: "location",
-          select: "address city district ward"
+          path: "avatar",
+          select: "url"
         }
-      });
+      }
+    });
     if (!favorites.length)
       return res
         .status(404)
