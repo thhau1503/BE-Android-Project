@@ -13,6 +13,8 @@ const requestController = require('../controllers/requestController');
  *         - id_user_rent
  *         - id_renter
  *         - id_post
+ *         - date_time
+ *         - status
  *       properties:
  *         id_user_rent:
  *           type: string
@@ -27,11 +29,15 @@ const requestController = require('../controllers/requestController');
  *           type: string
  *           format: date-time
  *           description: Ngày và giờ của yêu cầu
+ *         status:
+ *           type: string
+ *           description: Trạng thái của yêu cầu
  *       example:
  *         id_user_rent: "60d0fe4f5311236168a109cb"
  *         id_renter: "60d0fe4f5311236168a109cc"
  *         id_post: "60d0fe4f5311236168a109cd"
  *         date_time: "2021-07-21T17:32:28Z"
+ *         status: "Pending"
  */
 
 /**

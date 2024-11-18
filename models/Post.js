@@ -17,8 +17,14 @@ const postSchema = new Schema({
     availability: { type: Boolean, default: true }, // Tình trạng còn trống hay đã thuê
     amenities: amenitiesSchema, // Embedded amenities
     additionalCosts: additionalCostsSchema, // Embedded additional costs
-    images: [{ type: String, required: true }], // Danh sách ảnh
-    videos: [{ type: String }], // Danh sách video (nếu có)
+    images: [{ 
+        url: { type: String, required: true },
+        public_id: { type: String, required: true }
+    }], // Danh sách ảnh
+    videos: [{ 
+        url: { type: String, required: true },
+        public_id: { type: String, required: true }
+    }], // Danh sách video (nếu có)
     averageRating: { type: Number, default: 0 }, // Điểm đánh giá trung bình
     views: { type: Number, default: 0 }, // Số lượt xem
     status: { 
@@ -26,9 +32,6 @@ const postSchema = new Schema({
         enum: ['Active', 'Inactive', 'Deleted', 'Pending', 'Locked'], 
         default: 'Pending' 
     }, // Trạng thái tin đăng
-
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
 }, {
     timestamps: true 
 });

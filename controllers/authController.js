@@ -3,9 +3,9 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const { sendOTP } = require("../services/emailService");
 const { generateOTP } = require("../services/otpService");
+const { cloudinary } = require('../config/cloudinaryConfig');
 
 const tempUserStore = new Map();
-
 const generateAccessToken = (user) => {
   return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -29,7 +29,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const otp = generateOTP();
-    tempUserStore.set(email, { username, hashedPassword, phone, address, otp }); 
+    tempUserStore.set(email, { username, hashedPassword, phone, address, otp });
     sendOTP(email, otp);
 
     res.json({ msg: "OTP sent to email. Please verify.", email });
@@ -48,7 +48,7 @@ exports.verifyOTP = async (req, res) => {
       return res.status(400).json({ msg: "Invalid OTP" });
     }
 
-    tempUserStore.delete(email); 
+    tempUserStore.delete(email);
 
     const { username, hashedPassword, phone, address } = tempUser;
     const user = new User({ username, password: hashedPassword, email, phone, address });
@@ -75,7 +75,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const otp = generateOTP();
-    tempUserStore.set(email, { otp }); 
+    tempUserStore.set(email, { otp });
     sendOTP(email, otp);
 
     res.json({ msg: "OTP sent to email. Please verify.", email });
@@ -94,7 +94,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ msg: "Invalid OTP" });
     }
 
-    tempUserStore.delete(email); 
+    tempUserStore.delete(email);
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
@@ -183,11 +183,21 @@ exports.updateUser = async (req, res) => {
     if (email) user.email = email;
     if (phone) user.phone = phone;
     if (address) user.address = address;
-    if (avatar) user.avatar = avatar;
+    if (req.file) {
+      if (user.avatar && user.avatar.public_id) {
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+      }
+      user.avatar = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
     if (password) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
     }
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
 
     await user.save();
     res.json({ msg: "User updated successfully", user });
@@ -255,9 +265,8 @@ exports.deleteUserById = async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    if(user.user_role == 'Admin')
-    {
-      return res.status(403).json({ msg: 'Cannot delete user with role Admin'});
+    if (user.user_role == 'Admin') {
+      return res.status(403).json({ msg: 'Cannot delete user with role Admin' });
     }
     await User.findByIdAndDelete(userId);
     res.json({ msg: 'User deleted successfully' });
@@ -286,7 +295,7 @@ exports.adminCreateUser = async (req, res) => {
       email,
       phone,
       address,
-      user_role: user_role || 'User', 
+      user_role: user_role || 'User',
       avatar: avatar || 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg'
     });
 
