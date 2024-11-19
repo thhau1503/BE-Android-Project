@@ -98,7 +98,7 @@ router.get('/user/:userId', favoriteController.getFavoritesByUserIdInput);
  *       404:
  *         description: Không tìm thấy mục yêu thích cho người dùng này
  */
-router.get('/user',auth(['Admin']), favoriteController.getFavoritesByUserId);
+router.get('/user',auth(['User','Renter']), favoriteController.getFavoritesByUserId);
 
 /**
  * @swagger
