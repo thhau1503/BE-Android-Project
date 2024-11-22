@@ -483,6 +483,21 @@ router.get('/getAll', postController.getAllPosts);
  *           type: string
  *         description: The location of the post
  *       - in: query
+ *         name: district
+ *         schema:
+ *           type: string
+ *         description: The district of the location
+ *       - in: query
+ *         name: ward
+ *         schema:
+ *           type: string
+ *         description: The ward of the location
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: The city of the location
+ *       - in: query
  *         name: roomType
  *         schema:
  *           type: string

@@ -268,6 +268,16 @@ exports.deleteUserById = async (req, res) => {
     if (user.user_role == 'Admin') {
       return res.status(403).json({ msg: 'Cannot delete user with role Admin' });
     }
+
+    if (user.avatar && user.avatar.public_id) {
+      try {
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+      } catch (error) {
+        console.error('Error deleting avatar from Cloudinary:', error.message);
+        return res.status(500).json({ msg: 'Error deleting avatar from Cloudinary' });
+      }
+    }
+
     await User.findByIdAndDelete(userId);
     res.json({ msg: 'User deleted successfully' });
   } catch (err) {
@@ -278,7 +288,7 @@ exports.deleteUserById = async (req, res) => {
 
 //Tạo người dùng cho admin
 exports.adminCreateUser = async (req, res) => {
-  const { username, password, email, phone, address, user_role, avatar } = req.body;
+  const { username, password, email, phone, address, user_role } = req.body;
 
   try {
     let user = await User.findOne({ email });
@@ -289,6 +299,18 @@ exports.adminCreateUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    let avatarData = {
+      url: 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg',
+      public_id: ''
+    };
+
+    if (req.file) {
+      avatarData = {
+        url: req.file.path, 
+        public_id: req.file.filename
+      };
+    }
+
     user = new User({
       username,
       password: hashedPassword,
@@ -296,7 +318,7 @@ exports.adminCreateUser = async (req, res) => {
       phone,
       address,
       user_role: user_role || 'User',
-      avatar: avatar || 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg'
+      avatar: avatarData
     });
 
     await user.save();
