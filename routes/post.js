@@ -467,6 +467,26 @@ router.get('/getAll', postController.getAllPosts);
 
 /**
  * @swagger
+ * /api/post/getLatest:
+ *   get:
+ *     summary: Lấy danh sách các bài post mới nhất
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài post mới nhất
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/getLatest', postController.getLatestPosts);
+
+/**
+ * @swagger
  * /api/post/search:
  *   get:
  *     summary: Tìm kiếm bài viết theo các tiêu chí
