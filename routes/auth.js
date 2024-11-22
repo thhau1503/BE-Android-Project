@@ -429,7 +429,7 @@ router.delete('/user/:userId', auth(['Admin']),deleteUserById);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -450,25 +450,20 @@ router.delete('/user/:userId', auth(['Admin']),deleteUserById);
  *                 description: Địa chỉ
  *               user_role:
  *                 type: string
- *                 description: Vai trò của người dùng
+ *                 enum: ['Admin', 'User', 'Renter']
+ *                 description: Vai trò người dùng
  *               avatar:
- *                 type: object
- *                 properties:
- *                   url:
- *                     type: string
- *                     description: URL of the user's avatar
- *                   public_id:
- *                     type: string
- *                     description: Public ID of the user's avatar
- *           description: The user's avatar
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh đại diện
  *     responses:
- *       200:
+ *       201:
  *         description: Người dùng đã được tạo thành công
  *       400:
  *         description: Người dùng đã tồn tại
  *       500:
  *         description: Lỗi server
  */
-router.post('/admin/create-user',auth(['Admin']), adminCreateUser);
+router.post('/admin/create-user', auth(['Admin']), upload.single('avatar'), adminCreateUser);
 
 module.exports = router;

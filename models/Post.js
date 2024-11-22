@@ -24,7 +24,7 @@ const postSchema = new Schema({
     videos: [{ 
         url: { type: String, required: true },
         public_id: { type: String, required: true }
-    }], // Danh sách video (nếu có)
+    }], // Danh sách video 
     averageRating: { type: Number, default: 0 }, // Điểm đánh giá trung bình
     views: { type: Number, default: 0 }, // Số lượt xem
     status: { 

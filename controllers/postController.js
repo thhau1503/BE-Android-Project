@@ -5,7 +5,7 @@ const { cloudinary } = require('../config/cloudinaryConfig');
 exports.createPost = async (req, res) => {
   try {
     const { title, description, price, location, landlord, roomType, size, amenities, additionalCosts } = req.body;
-    
+
     const parsedLocation = JSON.parse(location);
     const parsedAmenities = JSON.parse(amenities);
     const parsedAdditionalCosts = JSON.parse(additionalCosts);
@@ -159,12 +159,15 @@ exports.deletePost = async (req, res) => {
 
 exports.searchPosts = async (req, res) => {
   try {
-    const { title, location, roomType, priceMin, priceMax } = req.query;
+    const { title, location, district, ward, city, roomType, priceMin, priceMax } = req.query;
     const query = {};
 
     if (title) query.title = { $regex: title, $options: "i" };
     if (location)
       query["location.address"] = { $regex: location, $options: "i" };
+    if (district) query["location.district"] = { $regex: district, $options: "i" };
+    if (ward) query["location.ward"] = { $regex: ward, $options: "i" };
+    if (city) query["location.city"] = { $regex: city, $options: "i" };
     if (roomType) query.roomType = roomType;
     if (priceMin) query.price = { ...query.price, $gte: priceMin };
     if (priceMax) query.price = { ...query.price, $lte: priceMax };
