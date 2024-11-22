@@ -332,3 +332,14 @@ exports.getPostsByLandlordId = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Lấy danh sách các bài post mới nhất
+exports.getLatestPosts = async (req, res) => {
+  try {
+    const latestPosts = await Post.find().sort({ createdAt: -1 });
+    res.status(200).json(latestPosts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
