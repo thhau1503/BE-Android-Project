@@ -5,6 +5,7 @@ const swaggerSpec = require('./config/swaggerConfig');
 const socketIo = require('socket.io');
 const http = require('http');
 const cors = require('cors')
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -82,6 +83,12 @@ app.use('/api/order', orderRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/upload', uploadRoutes);
+
+app.use(express.static(path.join(__dirname, "client/build")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
