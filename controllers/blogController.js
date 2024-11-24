@@ -15,14 +15,8 @@ exports.createBlog = async (req, res) => {
 // Lấy danh sách bài viết
 exports.getBlogs = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
     const blogs = await Blog.find()
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    const total = await Blog.countDocuments();
-
-    res.status(200).json({ total, blogs });
+    res.status(200).json(blogs);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
