@@ -12,14 +12,14 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: ["http://localhost:3000","http://localhost:3001", "https://thhau1503.github.io/rent-house/"], 
+        origin: ["http://localhost:3000","http://localhost:3001", "https://thhau1503.github.io"], 
         methods: ["GET", "POST"],
         credentials: true
     }
 });
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://thhau1503.github.io/rent-house/'],
+    origin: ['http://localhost:3000', 'https://thhau1503.github.io'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
 }));
