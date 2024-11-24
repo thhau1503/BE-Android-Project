@@ -58,6 +58,8 @@ app.use(cors())
 // Cấu hình Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+app.use(express.static(path.join(__dirname, "build")));
+
 const authRoutes = require('./routes/auth');
 const notificationRoutes = require('./routes/notification');
 const postRoutes = require('./routes/post');
@@ -84,10 +86,8 @@ app.use('/api/report', reportRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/upload', uploadRoutes);
 
-app.use(express.static(path.join(__dirname, "client/build")));
-
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 const PORT = process.env.PORT || 5000;
