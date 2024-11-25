@@ -131,3 +131,13 @@ exports.getRequestsByRenterId = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+//Lấy danh sách yêu cầu theo id người thuê
+exports.getRequestsByUserId = async (req, res) => {
+    try {
+        const requests = await Request.find({ id_user_rent: req.params.userId });
+        res.status(200).json(requests);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
