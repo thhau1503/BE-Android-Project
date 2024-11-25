@@ -167,6 +167,33 @@ router.get('/renter/:renterId', requestController.getRequestsByRenterId);
 
 /**
  * @swagger
+ * /api/request/user/{userId}:
+ *   get:
+ *     summary: Lấy danh sách yêu cầu của người thuê theo ID
+ *     tags: [Requests]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người thuê
+ *     responses:
+ *       200:
+ *         description: Danh sách các yêu cầu của người thuê
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Request'
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/user/:userId', requestController.getRequestsByUserId);
+
+/**
+ * @swagger
  * /api/request/{id}:
  *   get:
  *     summary: Lấy yêu cầu theo ID
