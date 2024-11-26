@@ -11,7 +11,9 @@ const {
   updateUserRoleToRenter,
   getAllUsers, 
   deleteUserById,
-  adminCreateUser
+  adminCreateUser,
+  sendOtpSMS,
+  verifyOtpSMS
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -213,6 +215,118 @@ router.put('/update-role-to-renter/:userId', updateUserRoleToRenter);
  *                   type: string
  */
 router.post("/verify-otp", verifyOTP);
+
+/**
+ * @swagger
+ * /api/auth/send-otp-sms:
+ *   post:
+ *     summary: Gửi mã OTP qua SMS
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phoneNumber:
+ *                 type: string
+ *                 description: Số điện thoại của người dùng
+ *                 example: "+84364745239"
+ *     responses:
+ *       200:
+ *         description: Gửi OTP thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Gửi OTP thành công"
+ *       400:
+ *         description: Số điện thoại là bắt buộc
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Số điện thoại là bắt buộc"
+ *       500:
+ *         description: Có lỗi xảy ra
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Có lỗi xảy ra"
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ */
+router.post('/send-otp-sms', sendOtpSMS);
+
+/**
+ * @swagger
+ * /api/auth/verify-otp-sms:
+ *   post:
+ *     summary: Xác thực mã OTP qua SMS
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phoneNumber:
+ *                 type: string
+ *                 description: Số điện thoại của người dùng
+ *                 example: "+84364745239"
+ *               otp:
+ *                 type: string
+ *                 description: Mã OTP
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Xác thực thành công, role đã được cập nhật
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Xác thực thành công, role đã được cập nhật"
+ *       400:
+ *         description: Số điện thoại và OTP là bắt buộc hoặc OTP không hợp lệ hoặc đã hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Số điện thoại và OTP là bắt buộc"
+ *       500:
+ *         description: Có lỗi xảy ra
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Có lỗi xảy ra"
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ */
+router.post('/verify-otp-sms', verifyOtpSMS);
 
 /**
  * @swagger

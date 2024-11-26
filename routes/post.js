@@ -246,6 +246,64 @@ router.get('/landlord/:landlordId', postController.getPostsByLandlordId);
 
 /**
  * @swagger
+ * /api/post/nearby:
+ *   get:
+ *     summary: Tìm kiếm các bài đăng gần vị trí hiện tại
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: query
+ *         name: lat
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Vĩ độ của vị trí hiện tại
+ *       - in: query
+ *         name: lon
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Kinh độ của vị trí hiện tại
+ *       - in: query
+ *         name: maxDistance
+ *         required: false
+ *         schema:
+ *           type: number
+ *           default: 5000
+ *         description: Khoảng cách tối đa (mét)
+ *     responses:
+ *       200:
+ *         description: Danh sách các bài đăng gần vị trí hiện tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       400:
+ *         description: Vui lòng cung cấp vĩ độ và kinh độ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'Vui lòng cung cấp vĩ độ và kinh độ.'
+ *       500:
+ *         description: Lỗi khi tìm kiếm bài đăng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'Lỗi khi tìm kiếm bài đăng.'
+ */
+router.get('/nearby', postController.findNearbyPosts);
+
+/**
+ * @swagger
  * /api/post/getPendingPost:
  *   get:
  *     summary: Lấy các bài đăng có trạng thái "Pending"

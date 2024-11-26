@@ -1,23 +1,25 @@
-require('dotenv').config();
+const twilio = require("twilio");
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
+const accountSid = "AC6e782d78e4dadfcb7229eff701d378c2"; 
+const authToken = "69f341763ac2ba1cc93308b58cf41406"; 
+const fromPhone = "+17753698040";
 
-const client = require('twilio')(accountSid, authToken);
+const client = twilio(accountSid, authToken);
 
-const sendSMS = async (body) => {
-    let msgOptions = {
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: process.env.TO_NUMBER,
-        body
-    }
-    try {
-        let message = client.messages.create(msgOptions);
-        console.log(message);
-    }
-    catch (err) {
-        console.log(err);
-    }
-}   
+async function sendSMS(toPhoneNumber, message) {
+  try {
+    const response = await client.messages.create({
+      body: message,             
+      from: fromPhone,           
+      to: toPhoneNumber,   
+    });
+    console.log("SMS sent:", response.sid); 
+    return true;
+  } catch (error) {
+    console.log(toPhoneNumber, message)
+    console.error("Error sending SMS:", error);
+    throw new Error("Không thể gửi SMS. Vui lòng kiểm tra cấu hình.");
+  }
+}
 
-sendSMS('Hello from Twilio!');
+module.exports = { sendSMS };
