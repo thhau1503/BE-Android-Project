@@ -9,6 +9,7 @@
   "author": "Hau",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.7.8",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "cloudinary": "^1.41.3",
@@ -26,12 +27,14 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "nexmo": "^2.9.1",
     "nodemailer": "^6.9.15",
     "react-leaflet": "^4.2.1",
     "request": "^2.88.2",
     "requst": "^0.0.1-security",
     "socket.io": "^4.7.5",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "twilio": "^5.3.6"
   }
 }

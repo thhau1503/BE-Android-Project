@@ -1,11 +1,13 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const { sendSMS } = require("../services/sendSMS");
 const { sendOTP } = require("../services/emailService");
 const { generateOTP } = require("../services/otpService");
 const { cloudinary } = require('../config/cloudinaryConfig');
 
 const tempUserStore = new Map();
+const otpCache = new Map();
 const generateAccessToken = (user) => {
   return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -64,6 +66,61 @@ exports.verifyOTP = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+
+
+exports.sendOtpSMS = async (req, res) => {
+  const { phoneNumber } = req.body;
+
+  if (!phoneNumber) {
+    return res.status(400).json({ message: "Số điện thoại là bắt buộc" });
+  }
+
+  try {
+    const otp = generateOtp();
+
+    otpCache.set(phoneNumber, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+    await sendSMS(phoneNumber, `Mã OTP của bạn là: ${otp}`);
+
+    return res.status(200).json({ message: "Gửi OTP thành công" });
+  } catch (error) {
+    return res.status(500).json({ message: "Có lỗi xảy ra", error: error.message });
+  }
+};
+
+exports.verifyOtpSMS = async (req, res) => {
+  const { phoneNumber, otp } = req.body;
+
+  if (!phoneNumber || !otp) {
+    return res.status(400).json({ message: "Số điện thoại và OTP là bắt buộc" });
+  }
+
+  try {
+    const otpRecord = otpCache.get(phoneNumber);
+
+    if (!otpRecord) {
+      return res.status(400).json({ message: "OTP không tồn tại hoặc đã hết hạn" });
+    }
+
+    if (otpRecord.otp !== otp || otpRecord.expiresAt < Date.now()) {
+      return res.status(400).json({ message: "OTP không hợp lệ hoặc đã hết hạn" });
+    }
+
+    await User.findOneAndUpdate({ phoneNumber }, { user_role : "Renter" });
+
+    otpCache.delete(phoneNumber);
+
+    return res.status(200).json({ message: "Xác thực thành công, role đã được cập nhật" });
+  } catch (error) {
+    return res.status(500).json({ message: "Có lỗi xảy ra", error });
+  }
+};
+
+
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;

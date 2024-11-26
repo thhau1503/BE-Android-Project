@@ -1,12 +1,38 @@
 const mongoose = require("mongoose");
 const Post = require("../models/Post");
 const { cloudinary } = require('../config/cloudinaryConfig');
-// Tạo bài đăng mới
+const API_KEY = '9YHLYJH0cPEqnF9yCHOUrY23rEQKZp9v8vUmdQmS';
+const axios = require('axios');
+
+async function getCoordinatesFromAddress(address) {
+  try {
+    const encodedAddress = encodeURIComponent(address)
+    const response = await axios.get(`https://rsapi.goong.io/geocode?address=${encodedAddress}&api_key=${API_KEY}`);
+    console.log(response.data)
+    const location = response.data.results[0]?.geometry?.location;
+
+    if (!location) {
+      throw new Error('Không tìm thấy tọa độ cho địa chỉ này');
+    }
+
+    return { lat: location.lat, lon: location.lng };
+  } catch (error) {
+    console.error('Lỗi khi gọi GoongMap API:', error, address);
+    throw new Error('Không thể lấy tọa độ từ địa chỉ');
+  }
+}
+
 exports.createPost = async (req, res) => {
   try {
     const { title, description, price, location, landlord, roomType, size, amenities, additionalCosts } = req.body;
 
     const parsedLocation = JSON.parse(location);
+
+
+    const address = `${parsedLocation.address}, ${parsedLocation.ward}, ${parsedLocation.district}, ${parsedLocation.city}, Việt Nam`;
+
+    console.log(`https://rsapi.goong.io/geocode?address=${encodeURIComponent(address)}&api_key=${API_KEY}`);
+    const { lat, lon } = await getCoordinatesFromAddress(address);
     const parsedAmenities = JSON.parse(amenities);
     const parsedAdditionalCosts = JSON.parse(additionalCosts);
 
@@ -24,7 +50,16 @@ exports.createPost = async (req, res) => {
       title,
       description,
       price,
-      location: parsedLocation,
+      location: {
+        address: parsedLocation.address,
+        city: parsedLocation.city,
+        district: parsedLocation.district,
+        ward: parsedLocation.ward,
+        geoLocation: {
+          type: 'Point',
+          coordinates: [lon, lat] 
+        }
+      },
       landlord,
       roomType,
       size,
@@ -37,7 +72,7 @@ exports.createPost = async (req, res) => {
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
   } catch (err) {
-    res.status(500).json({ error: err });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -60,6 +95,60 @@ exports.getPostById = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.findNearbyPosts = async (req, res) => {
+  try {
+    const { lat, lon, maxDistance = 5000 } = req.query;
+
+    if (!lat || !lon) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp vĩ độ và kinh độ.' });
+    }
+
+    const posts = await Post.find({
+      'location.geoLocation': {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lon), parseFloat(lat)],
+          },
+          $maxDistance: parseInt(maxDistance),
+        },
+      },
+      status: 'Active',
+    }).sort({ createdAt: -1 });
+
+    const postsWithDistance = posts.map(post => {
+      const postCoordinates = post.location.geoLocation.coordinates;
+      const distance = getDistanceFromLatLonInKm(lat, lon, postCoordinates[1], postCoordinates[0]);
+      return {
+        ...post.toObject(),
+        distance,
+      }
+    });
+
+    res.status(200).json(postsWithDistance);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi khi tìm kiếm bài đăng.' });
+  }
+};
+
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = deg2rad(lat2 - lat1);  // Convert to radians
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Calculate the distance
+  return distance;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
 
 exports.updatePost = async (req, res) => {
   const { id } = req.params;

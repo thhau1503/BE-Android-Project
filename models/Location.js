@@ -12,4 +12,7 @@ const locationSchema = new mongoose.Schema({
 },
 { _id: false });
 
+locationSchema.index({geoLocation: '2dsphere'});
+
 module.exports = locationSchema; 
+
