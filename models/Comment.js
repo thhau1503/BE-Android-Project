@@ -2,10 +2,14 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const commentSchema = new Schema({
-    id_user_rent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    id_post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
-    comment_text: { type: String, required: true },
-    create_at: { type: Date, default: Date.now },
-});
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Người đánh giá
+    house: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' }, // Nhà trọ được đánh giá
+    rating: { type: Number, min: 1, max: 5 },
+    comment: String
+},
+    {
+        timestamps: true,
+    }
+);
 
 module.exports = mongoose.model('Comment', commentSchema);
