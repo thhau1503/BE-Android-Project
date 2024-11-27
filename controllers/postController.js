@@ -24,6 +24,7 @@ async function getCoordinatesFromAddress(address) {
 
 exports.createPost = async (req, res) => {
   try {
+    console.log(req.body)
     const { title, description, price, location, landlord, roomType, size, amenities, additionalCosts } = req.body;
 
     const parsedLocation = JSON.parse(location);
@@ -425,7 +426,7 @@ exports.getPostsByLandlordId = async (req, res) => {
 // Lấy danh sách các bài post mới nhất
 exports.getLatestPosts = async (req, res) => {
   try {
-    const latestPosts = await Post.find().sort({ createdAt: -1 });
+    const latestPosts = await Post.find({ status: 'Active'}).sort({ createdAt: -1 });
     res.status(200).json(latestPosts);
   } catch (err) {
     console.error(err.message);
