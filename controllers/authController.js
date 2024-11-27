@@ -257,7 +257,7 @@ exports.updateUser = async (req, res) => {
     console.log('Request file:', req.file);
 
     await user.save();
-    res.json({ msg: "User updated successfully", user });
+    res.status(200).json({ msg: "User updated successfully", user });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server error" });
