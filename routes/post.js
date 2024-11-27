@@ -304,6 +304,29 @@ router.get('/nearby', postController.findNearbyPosts);
 
 /**
  * @swagger
+ * /api/post/{id}/views:
+ *   put:
+ *     summary: Tăng số lượt xem của bài đăng
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của bài đăng
+ *     responses:
+ *       200:
+ *         description: Tăng lượt xem thành công
+ *       404:
+ *         description: Không tìm thấy bài đăng
+ *       500:
+ *         description: Lỗi server
+ */
+router.put('/:id/views', postController.increasePostViews);
+
+/**
+ * @swagger
  * /api/post/getPendingPost:
  *   get:
  *     summary: Lấy các bài đăng có trạng thái "Pending"

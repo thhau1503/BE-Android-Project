@@ -3,6 +3,7 @@ const Post = require("../models/Post");
 const { cloudinary } = require('../config/cloudinaryConfig');
 const API_KEY = '9YHLYJH0cPEqnF9yCHOUrY23rEQKZp9v8vUmdQmS';
 const axios = require('axios');
+const Comment = require('../models/Comment');
 
 async function getCoordinatesFromAddress(address) {
   try {
@@ -91,11 +92,23 @@ exports.getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id).populate("landlord", "username email phone address");
     if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const averageRatingResult = await Comment.aggregate([
+      { $match: { house: new mongoose.Types.ObjectId(req.params.id) } }, // Lọc bình luận cho bài đăng
+      { $group: { _id: "$house", averageRating: { $avg: "$rating" } } } // Tính trung bình đánh giá
+    ]);
+
+    const averageRating = averageRatingResult.length > 0 ? averageRatingResult[0].averageRating.toFixed(1) : 0;
+
+    post.averageRating = averageRating;
+    await post.save();
+
     res.json(post);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 exports.findNearbyPosts = async (req, res) => {
   try {
@@ -428,6 +441,23 @@ exports.getLatestPosts = async (req, res) => {
   try {
     const latestPosts = await Post.find({ status: 'Active'}).sort({ createdAt: -1 });
     res.status(200).json(latestPosts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Tăng số lượt xem của bài post
+exports.increasePostViews = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
+
+    post.views += 1;
+    await post.save();
+    res.status(200).json({ msg: 'Post views increased'});
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error' });
