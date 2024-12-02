@@ -140,6 +140,40 @@ router.get('/getAll', requestController.getAllRequests);
 
 /**
  * @swagger
+ * /api/request/post/{postId}:
+ *   get:
+ *     summary: Lấy danh sách yêu cầu thuê theo ID bài đăng
+ *     tags: [Requests]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của bài đăng
+ *     responses:
+ *       200:
+ *         description: Danh sách yêu cầu thuê thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Request'
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get('/post/:postId', requestController.getRequestsByPostId);
+
+/**
+ * @swagger
  * /api/request/renter/{renterId}:
  *   get:
  *     summary: Lấy danh sách yêu cầu theo ID của người thuê
