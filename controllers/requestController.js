@@ -141,3 +141,13 @@ exports.getRequestsByUserId = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 }
+
+//Lấy danh sách yêu cầu theo id bài viết
+exports.getRequestsByPostId = async (req, res) => {
+    try {
+        const requests = await Request.find({ id_post: req.params.postId });
+        res.status(200).json(requests);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
