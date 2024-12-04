@@ -74,7 +74,11 @@ exports.getFavoritesByUserId = async (req, res) => {
     const favorites = await Favorite.find({ id_user_rent: req.user.id }).populate("id_user_rent", "username email phone avatar")
       .populate({
         path: "id_post",
-        select: "title description price location",
+        select: "title description price location images",
+        populate: {
+          path: "images",
+          select: "url"
+        },
         populate: {
           path: "location",
           select: "address city district ward"
