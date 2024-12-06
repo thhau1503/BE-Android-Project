@@ -263,7 +263,9 @@ exports.deletePost = async (req, res) => {
 exports.searchPosts = async (req, res) => {
   try {
     const { title, location, district, ward, city, roomType, priceMin, priceMax } = req.query;
-    const query = {};
+    const query = {
+      status: 'Active'
+    };
 
     if (title) query.title = { $regex: title, $options: "i" };
     if (location)
