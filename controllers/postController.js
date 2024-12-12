@@ -263,7 +263,9 @@ exports.deletePost = async (req, res) => {
 exports.searchPosts = async (req, res) => {
   try {
     const { title, location, district, ward, city, roomType, priceMin, priceMax } = req.query;
-    const query = {};
+    const query = {
+      status: 'Active'
+    };
 
     if (title) query.title = { $regex: title, $options: "i" };
     if (location)
@@ -296,7 +298,7 @@ exports.getTopPostsByViews = async (req, res) => {
 exports.getPostsByRoomType = async (req, res) => {
   try {
     const roomType = req.params.roomType;
-    const posts = await Post.find({ roomType: roomType });
+    const posts = await Post.find({ roomType: roomType, status: 'Active' });
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -307,7 +309,7 @@ exports.getPostsByRoomType = async (req, res) => {
 exports.getPostsByDistrict = async (req, res) => {
   try {
     const district = req.params.district;
-    const posts = await Post.find({ "location.district": district });
+    const posts = await Post.find({ "location.district": district, status: 'Active' });
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ message: error.message });
