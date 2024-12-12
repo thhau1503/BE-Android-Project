@@ -8,7 +8,7 @@ const userSchema = new Schema({
     user_role: { type: String, enum: ['Admin', 'User','Renter'], default: 'User' ,required: false },
     phone: { type: String, required: true },
     address: { type: String, required: true },
-    isOnline: { type: Boolean, default: false },
+    isOnline: { type: Boolean, default: true },
     avatar: {
         url: String,
         public_id: String

@@ -53,7 +53,18 @@ exports.verifyOTP = async (req, res) => {
     tempUserStore.delete(email);
 
     const { username, hashedPassword, phone, address } = tempUser;
-    const user = new User({ username, password: hashedPassword, email, phone, address });
+    let avatarData = {
+      url: 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg',
+      public_id: ''
+    };
+
+    if (req.file) {
+      avatarData = {
+        url: req.file.path, 
+        public_id: req.file.filename
+      };
+    }
+    const user = new User({ username, password: hashedPassword, email, phone, address, avatar: avatarData });
 
     await user.save();
 
