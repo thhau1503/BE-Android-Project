@@ -154,7 +154,7 @@ router.post('/users/:userId/follow', auth(), followUser);
  * /api/auth/users/{userId}/unfollow:
  *   post:
  *     summary: Hủy theo dõi người dùng
- *     tags: [Auth]
+ *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     parameters:
