@@ -8,6 +8,85 @@ const { cloudinary } = require('../config/cloudinaryConfig');
 
 const tempUserStore = new Map();
 const otpCache = new Map();
+
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+exports.googleLogin = async (req, res) => {
+    try {
+        const { tokenId } = req.body;
+        
+        // Verify Google token
+        const ticket = await client.verifyIdToken({
+            idToken: tokenId,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const { email_verified, email, name, picture } = ticket.getPayload();
+
+        if (!email_verified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email not verified with Google'
+            });
+        }
+
+        // Check if user exists
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create new user if doesn't exist
+            user = new User({
+                username: name,
+                email: email,
+                avatar: {
+                    url: picture,
+                    public_id: 'google_avatar'
+                },
+                password: email + process.env.JWT_SECRET, // Generate random password
+                isVerified: true
+            });
+
+            await user.save();
+        }
+
+        // Generate JWT token
+        const payload = {
+            user: {
+                id: user.id,
+                email: user.email,
+                user_role: user.user_role
+            }
+        };
+
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({
+            success: true,
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                user_role: user.user_role
+            }
+        });
+
+    } catch (error) {
+        console.error('Google login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 const generateAccessToken = (user) => {
   return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -394,5 +473,104 @@ exports.adminCreateUser = async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Xem profile người dùng
+exports.getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId)
+            .select('-password')
+            .populate('followers', 'username avatar')
+            .populate('following', 'username avatar');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Theo dõi người dùng
+exports.followUser = async (req, res) => {
+    try {
+        const userToFollow = await User.findById(req.params.userId);
+        const currentUser = await User.findById(req.user.id);
+
+        if (!userToFollow || !currentUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (currentUser.following.includes(userToFollow._id)) {
+            return res.status(400).json({ message: 'Already following this user' });
+        }
+
+        // Thêm vào danh sách following/followers
+        currentUser.following.push(userToFollow._id);
+        userToFollow.followers.push(currentUser._id);
+
+        // Cập nhật thống kê
+        currentUser.statistics.totalFollowing += 1;
+        userToFollow.statistics.totalFollowers += 1;
+
+        await Promise.all([currentUser.save(), userToFollow.save()]);
+
+        res.json({ message: 'Successfully followed user' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.unfollowUser = async (req, res) => {
+  try {
+      const userToUnfollow = await User.findById(req.params.userId);
+      const currentUser = await User.findById(req.user.id);
+
+      if (!userToUnfollow || !currentUser) {
+          return res.status(404).json({
+              success: false,
+              message: 'Không tìm thấy người dùng'
+          });
+      }
+
+      // Check if actually following
+      if (!currentUser.following.includes(userToUnfollow._id)) {
+          return res.status(400).json({
+              success: false,
+              message: 'Bạn chưa theo dõi người dùng này'
+          });
+      }
+
+      // Remove from following/followers arrays
+      currentUser.following = currentUser.following.filter(
+          id => id.toString() !== userToUnfollow._id.toString()
+      );
+      userToUnfollow.followers = userToUnfollow.followers.filter(
+          id => id.toString() !== currentUser._id.toString()
+      );
+
+      // Update statistics
+      currentUser.statistics.totalFollowing -= 1;
+      userToUnfollow.statistics.totalFollowers -= 1;
+
+      await Promise.all([
+          currentUser.save(),
+          userToUnfollow.save()
+      ]);
+
+      res.json({
+          success: true,
+          message: 'Đã hủy theo dõi thành công'
+      });
+
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: 'Lỗi server',
+          error: error.message
+      });
   }
 };
