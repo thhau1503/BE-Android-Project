@@ -13,7 +13,11 @@ const {
   deleteUserById,
   adminCreateUser,
   sendOtpSMS,
-  verifyOtpSMS
+  verifyOtpSMS,
+  googleLogin,
+  getUserProfile,
+  followUser,
+  unfollowUser
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -67,6 +71,117 @@ const { upload } = require('../config/cloudinaryConfig');
  *               description: Public ID of the user's avatar
  *           description: The user's avatar
  */
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   post:
+ *     summary: Đăng nhập bằng Google
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tokenId
+ *             properties:
+ *               tokenId:
+ *                 type: string
+ *                 description: Google OAuth token ID
+ *     responses:
+ *       200:
+ *         description: Đăng nhập thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Token không hợp lệ
+ *       500:
+ *         description: Lỗi server
+ */
+router.post('/google', googleLogin);
+
+/**
+ * @swagger
+ * /api/auth/user/{userId}/profile:
+ *   get:
+ *     summary: Xem thông tin profile người dùng
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get('/users/:userId/profile', getUserProfile);
+
+/**
+ * @swagger
+ * /api/auth/users/{userId}/follow:
+ *   post:
+ *     summary: Theo dõi người dùng
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Theo dõi thành công
+ */
+router.post('/users/:userId/follow', auth(), followUser);
+
+/**
+ * @swagger
+ * /api/auth/users/{userId}/unfollow:
+ *   post:
+ *     summary: Hủy theo dõi người dùng
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng muốn hủy theo dõi
+ *     responses:
+ *       200:
+ *         description: Hủy theo dõi thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Không tìm thấy người dùng hoặc chưa theo dõi
+ *       500:
+ *         description: Lỗi server
+ */
+router.post('/users/:userId/unfollow', auth(), unfollowUser);
 
 /**
  * @swagger
