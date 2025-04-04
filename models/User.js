@@ -13,6 +13,8 @@ const userSchema = new Schema({
         url: String,
         public_id: String
     },
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Danh sách người theo dõi mình
+    following: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Danh sách người mình theo dõi
 }, {
     timestamps: true
 }

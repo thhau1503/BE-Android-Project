@@ -48,31 +48,61 @@ exports.createPost = async (req, res) => {
       public_id: file.filename
     })) : [];
 
-    const newPost = new Post({
-      title,
-      description,
-      price,
-      location: {
-        address: parsedLocation.address,
-        city: parsedLocation.city,
-        district: parsedLocation.district,
-        ward: parsedLocation.ward,
-        geoLocation: {
-          type: 'Point',
-          coordinates: [lon, lat] 
-        }
-      },
-      landlord,
-      roomType,
-      size,
-      amenities: parsedAmenities,
-      additionalCosts: parsedAdditionalCosts,
-      images,
-      videos
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
+    try {
+      // Tạo bài đăng mới
+      const newPost = new Post({
+        title,
+        description,
+        price,
+        location: {
+          address: parsedLocation.address,
+          city: parsedLocation.city,
+          district: parsedLocation.district,
+          ward: parsedLocation.ward,
+          geoLocation: {
+            type: 'Point',
+            coordinates: [lon, lat] 
+          }
+        },
+        landlord,
+        roomType,
+        size,
+        amenities: parsedAmenities,
+        additionalCosts: parsedAdditionalCosts,
+        images,
+        videos,
+        userPackage: req.userPackage ? req.userPackage._id : null
+      });
+
+      const savedPost = await newPost.save({ session });
+
+      if (req.userPackage) {
+        const userPackage = await UserPackage.findById(req.userPackage._id).session(session);
+        if (userPackage) {
+          userPackage.postsLeft -= 1;
+          await userPackage.save({ session });
+        }
+      }
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(201).json({
+        success: true,
+        message: 'Tạo bài đăng thành công',
+        post: savedPost,
+        postsRemaining: req.userPackage ? req.userPackage.postsLeft - 1 : 0
+      });
+    } catch (error) {
+      // Abort transaction nếu có lỗi
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
