@@ -15,9 +15,9 @@ const {
   sendOtpSMS,
   verifyOtpSMS,
   googleLogin,
-  getUserProfile,
   followUser,
-  unfollowUser
+  unfollowUser,
+  getUserProfile
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -113,28 +113,11 @@ router.post('/google', googleLogin);
 
 /**
  * @swagger
- * /api/auth/user/{userId}/profile:
- *   get:
- *     summary: Xem thông tin profile người dùng
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Thành công
- */
-router.get('/users/:userId/profile', getUserProfile);
-
-/**
- * @swagger
  * /api/auth/users/{userId}/follow:
  *   post:
  *     summary: Theo dõi người dùng
- *     tags: [Users]
+ *     description: API cho phép người dùng hiện tại theo dõi một người dùng khác
+ *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -143,18 +126,58 @@ router.get('/users/:userId/profile', getUserProfile);
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID của người dùng cần theo dõi
  *     responses:
  *       200:
  *         description: Theo dõi thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Followed successfully
+ *       400:
+ *         description: Đã theo dõi người dùng này rồi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Already following this user
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
-router.post('/users/:userId/follow', auth(), followUser);
+router.post('/users/:userId/follow', auth(['User', 'Renter']) ,followUser);
 
 /**
  * @swagger
  * /api/auth/users/{userId}/unfollow:
  *   post:
  *     summary: Hủy theo dõi người dùng
- *     tags: [Users]
+ *     description: API cho phép người dùng hiện tại hủy theo dõi một người dùng khác
+ *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -172,16 +195,167 @@ router.post('/users/:userId/follow', auth(), followUser);
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
+ *                   example: Unfollowed successfully
+ *       400:
+ *         description: Chưa theo dõi người dùng này
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Not following this user
  *       404:
- *         description: Không tìm thấy người dùng hoặc chưa theo dõi
+ *         description: Không tìm thấy người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found
  *       500:
  *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
-router.post('/users/:userId/unfollow', auth(), unfollowUser);
+router.post('/users/:userId/unfollow',auth(['User', 'Renter']), unfollowUser);
+
+/**
+ * @swagger
+ * /api/auth/users/{userId}/profile:
+ *   get:
+ *     summary: Lấy thông tin profile của người dùng
+ *     description: API lấy thông tin chi tiết profile của người dùng bao gồm trạng thái theo dõi
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của người dùng cần xem profile
+ *     responses:
+ *       200:
+ *         description: Thông tin profile người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 profile:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: 60d0fe4f5311236168a109ca
+ *                     username:
+ *                       type: string
+ *                       example: johndoe
+ *                     email:
+ *                       type: string
+ *                       example: john@example.com
+ *                     user_role:
+ *                       type: string
+ *                       example: User
+ *                     phone:
+ *                       type: string
+ *                       example: "0123456789"
+ *                     address:
+ *                       type: string
+ *                       example: "123 Street, City"
+ *                     avatar:
+ *                       type: object
+ *                       properties:
+ *                         url:
+ *                           type: string
+ *                           example: https://cloudinary.com/image.jpg
+ *                         public_id:
+ *                           type: string
+ *                           example: user_avatars/abc123
+ *                     followers:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           username:
+ *                             type: string
+ *                           avatar:
+ *                             type: object
+ *                             properties:
+ *                               url:
+ *                                 type: string
+ *                     following:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           username:
+ *                             type: string
+ *                           avatar:
+ *                             type: object
+ *                             properties:
+ *                               url:
+ *                                 type: string
+ *                     followStatus:
+ *                       type: object
+ *                       properties:
+ *                         isFollowing:
+ *                           type: boolean
+ *                           description: Người dùng hiện tại có đang theo dõi profile này không
+ *                           example: true
+ *                         isFollower:
+ *                           type: boolean
+ *                           description: Người dùng của profile này có đang theo dõi người dùng hiện tại không
+ *                           example: false
+ *       400:
+ *         description: ID người dùng không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid user ID format
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.get('/users/:userId/profile', auth(['User', 'Renter']), getUserProfile);
 
 /**
  * @swagger

@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const mongoose = require('mongoose');
 const { sendSMS } = require("../services/sendSMS");
 const { sendOTP } = require("../services/emailService");
 const { generateOTP } = require("../services/otpService");
@@ -476,101 +477,118 @@ exports.adminCreateUser = async (req, res) => {
   }
 };
 
-// Xem profile người dùng
-exports.getUserProfile = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.userId)
-            .select('-password')
-            .populate('followers', 'username avatar')
-            .populate('following', 'username avatar');
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// Theo dõi người dùng
 exports.followUser = async (req, res) => {
-    try {
-        const userToFollow = await User.findById(req.params.userId);
-        const currentUser = await User.findById(req.user.id);
+  try {
+    const userToFollow = await User.findById(req.params.userId);
+    const currentUser = await User.findById(req.user.id);
 
-        if (!userToFollow || !currentUser) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        if (currentUser.following.includes(userToFollow._id)) {
-            return res.status(400).json({ message: 'Already following this user' });
-        }
-
-        // Thêm vào danh sách following/followers
-        currentUser.following.push(userToFollow._id);
-        userToFollow.followers.push(currentUser._id);
-
-        // Cập nhật thống kê
-        currentUser.statistics.totalFollowing += 1;
-        userToFollow.statistics.totalFollowers += 1;
-
-        await Promise.all([currentUser.save(), userToFollow.save()]);
-
-        res.json({ message: 'Successfully followed user' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!userToFollow) {
+      return res.status(404).json({ error: 'User not found' });
     }
+
+    if (currentUser.following.includes(userToFollow._id)) {
+      return res.status(400).json({ error: 'Already following this user' });
+    }
+
+    currentUser.following.push(userToFollow._id);
+    await currentUser.save();
+
+    userToFollow.followers.push(currentUser._id);
+    await userToFollow.save();
+
+    res.json({ message: 'Followed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 exports.unfollowUser = async (req, res) => {
   try {
-      const userToUnfollow = await User.findById(req.params.userId);
-      const currentUser = await User.findById(req.user.id);
+    const userToUnfollow = await User.findById(req.params.userId);
+    const currentUser = await User.findById(req.user.id);
 
-      if (!userToUnfollow || !currentUser) {
-          return res.status(404).json({
-              success: false,
-              message: 'Không tìm thấy người dùng'
-          });
+    if (!userToUnfollow) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!currentUser.following.includes(userToUnfollow._id)) {
+      return res.status(400).json({ error: 'Not following this user' });
+    }
+
+    currentUser.following.pull(userToUnfollow._id);
+    await currentUser.save();
+
+    userToUnfollow.followers.pull(currentUser._id);
+    await userToUnfollow.save();
+
+    res.json({ message: 'Unfollowed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getUserProfile = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    const profileUser = await User.findById(req.params.userId)
+      .select('-password -__v -refreshToken')
+      .lean();
+
+    if (!profileUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Lấy thông tin người dùng hiện tại
+    const currentUser = await User.findById(req.user.id)
+      .select('following followers')
+      .lean();
+
+    // Kiểm tra trạng thái follow:
+    // 1. isFollowing: người dùng hiện tại có đang theo dõi profileUser không
+    const isFollowing = currentUser.following.some(id => 
+      id.toString() === profileUser._id.toString()
+    );
+    
+    // 2. isFollower: profileUser có đang theo dõi người dùng hiện tại không
+    const isFollower = profileUser.following.some(id => 
+      id.toString() === currentUser._id.toString()
+    );
+
+    const [followers, following] = await Promise.all([
+      User.find({ _id: { $in: profileUser.followers || [] } })
+        .select('username avatar _id')
+        .lean(),
+      
+      User.find({ _id: { $in: profileUser.following || [] } })
+        .select('username avatar _id')
+        .lean()
+    ]);
+
+    res.json({
+      profile: {
+        ...profileUser,
+        followers,
+        following,
+        followersCount: followers.length,
+        followingCount: following.length
+      },
+      followStatus: {
+        isFollowing,
+        isFollower
       }
-
-      // Check if actually following
-      if (!currentUser.following.includes(userToUnfollow._id)) {
-          return res.status(400).json({
-              success: false,
-              message: 'Bạn chưa theo dõi người dùng này'
-          });
-      }
-
-      // Remove from following/followers arrays
-      currentUser.following = currentUser.following.filter(
-          id => id.toString() !== userToUnfollow._id.toString()
-      );
-      userToUnfollow.followers = userToUnfollow.followers.filter(
-          id => id.toString() !== currentUser._id.toString()
-      );
-
-      // Update statistics
-      currentUser.statistics.totalFollowing -= 1;
-      userToUnfollow.statistics.totalFollowers -= 1;
-
-      await Promise.all([
-          currentUser.save(),
-          userToUnfollow.save()
-      ]);
-
-      res.json({
-          success: true,
-          message: 'Đã hủy theo dõi thành công'
-      });
+    });
 
   } catch (error) {
-      res.status(500).json({
-          success: false,
-          message: 'Lỗi server',
-          error: error.message
-      });
+    console.error('Profile error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { 
+        details: error.message,
+        stack: error.stack 
+      })
+    });
   }
 };

@@ -8,6 +8,7 @@ const cors = require('cors')
 const path = require('path');
 require('dotenv').config();
 
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -72,6 +73,7 @@ const orderRoutes = require('./routes/order');
 const reportRoutes = require('./routes/report');
 const blogRoutes = require('./routes/blog');
 const uploadRoutes = require('./routes/upload');
+const packageRoutes = require('./routes/package');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -85,6 +87,7 @@ app.use('/api/order', orderRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/packages', packageRoutes);
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
