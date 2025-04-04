@@ -13,18 +13,6 @@ const userSchema = new Schema({
         url: String,
         public_id: String
     },
-    bio: { type: String }, // Tiểu sử người dùng
-    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Người theo dõi
-    following: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Đang theo dõi
-    postCredits: { // Credit để đăng bài
-        amount: { type: Number, default: 5 }, // Số lượt đăng còn lại
-        lastRefillDate: { type: Date } // Ngày nạp gần nhất
-    },
-    statistics: { // Thống kê
-        totalPosts: { type: Number, default: 0 },
-        totalFollowers: { type: Number, default: 0 },
-        totalFollowing: { type: Number, default: 0 }
-    },
 }, {
     timestamps: true
 }
