@@ -20,7 +20,7 @@ const io = socketIo(server, {
 });
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://thhau1503.github.io'],
+    origin: ['http://localhost:3000', 'https://thhau1503.github.io','http://localhost:3001'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
 }));
@@ -68,12 +68,12 @@ const favoriteRoutes = require('./routes/favorite');
 const chatRoutes = require('./routes/chat');
 const requestRoutes = require('./routes/request');
 const commentRoutes = require('./routes/comment');
-const messageRoutes = require('./routes/message');
 const orderRoutes = require('./routes/order');
 const reportRoutes = require('./routes/report');
 const blogRoutes = require('./routes/blog');
 const uploadRoutes = require('./routes/upload');
 const packageRoutes = require('./routes/package');
+const messageRoutes = require('./routes/message');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -82,12 +82,12 @@ app.use('/api/favorite', favoriteRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/request', requestRoutes);
 app.use('/api/comment', commentRoutes);
-app.use('/api/message', messageRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/packages', packageRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
