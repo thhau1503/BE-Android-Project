@@ -216,7 +216,7 @@ const { upload } = require('../config/cloudinaryConfig');
  *       500:
  *         description: Lỗi server
  */
-router.post('/create', userPackageController.checkPostPermission, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), postController.createPost);
+router.post('/create', auth(['Renter']), userPackageController.checkPostPermission, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), postController.createPost);
 
 /**
  * @swagger

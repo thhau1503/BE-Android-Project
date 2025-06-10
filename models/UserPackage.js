@@ -8,7 +8,7 @@ const userPackageSchema = new Schema({
   expiresAt: { type: Date, required: true },
   postsLeft: { type: Number, required: true }, 
   isActive: { type: Boolean, default: true },
-  paymentId: { type: Schema.Types.ObjectId, ref: 'Transaction' },
+  paymentId: { type: Schema.Types.ObjectId, ref: 'Payment' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('UserPackage', userPackageSchema);

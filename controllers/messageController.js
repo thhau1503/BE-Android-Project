@@ -2,6 +2,8 @@ const Message = require('../models/Message');
 const Chat = require('../models/Chat');
 const mongoose = require('mongoose');
 
+
+
 const findMessageById = async (messageId) => {
   if (!mongoose.Types.ObjectId.isValid(messageId)) {
     throw new Error('Invalid message ID');
@@ -14,9 +16,9 @@ exports.createMessage = async (req, res) => {
   const senderId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(chatId) || !content?.trim()) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: 'Chat ID and message content are required' 
+      message: 'Chat ID and message content are required'
     });
   }
 
@@ -33,7 +35,6 @@ exports.createMessage = async (req, res) => {
       });
     }
 
-    // Create and save message
     const newMessage = new Message({
       chatId,
       sender: senderId,
@@ -41,10 +42,10 @@ exports.createMessage = async (req, res) => {
     });
 
     const savedMessage = await newMessage.save();
-    
-    await Chat.findByIdAndUpdate(chatId, { 
+
+    await Chat.findByIdAndUpdate(chatId, {
       lastMessage: savedMessage._id,
-      updatedAt: new Date() 
+      updatedAt: new Date()
     });
 
     const populatedMessage = await Message.populate(savedMessage, {
@@ -142,10 +143,9 @@ exports.getMessageByChatId = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
-    // Mark messages as read
     await Message.updateMany(
-      { 
-        chatId, 
+      {
+        chatId,
         sender: { $ne: userId },
         readBy: { $ne: userId }
       },
@@ -171,65 +171,66 @@ exports.getMessageByChatId = async (req, res) => {
   }
 };
 
+//
 exports.deleteMessage = async (req, res) => {
-    try {
-      const message = await findMessageById(req.params.messageId);
-      if (!message) {
-        return res.status(404).json({
-          success: false,
-          message: 'Message not found'
-        });
-      }
-  
-      const chat = await Chat.findOne({
-        _id: message.chatId,
-        members: { $in: [req.user.id] }
-      });
-  
-      if (!chat) {
-        return res.status(403).json({
-          success: false,
-          message: 'Unauthorized to delete this message'
-        });
-      }
-  
-      const deletedMessage = await Message.findByIdAndDelete(req.params.messageId);
-      
-      if (deletedMessage) {
-        const chat = await Chat.findById(deletedMessage.chatId);
-        if (chat?.lastMessage?.equals(deletedMessage._id)) {
-          const prevMessage = await Message.findOne(
-            { chatId: deletedMessage.chatId, _id: { $ne: deletedMessage._id } },
-            {},
-            { sort: { createdAt: -1 } }
-          );
-          
-          await Chat.findByIdAndUpdate(deletedMessage.chatId, {
-            lastMessage: prevMessage?._id || null
-          });
-        }
-  
-        const io = req.app.get('socketio');
-        if (io) {
-          io.to(deletedMessage.chatId).emit('messageDeleted', {
-            messageId: deletedMessage._id,
-            chatId: deletedMessage.chatId,
-            deletedBy: req.user.id
-          });
-        }
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: 'Message deleted successfully',
-        deletedMessage
-      });
-  
-    } catch (err) {
-      console.error('Error deleting message:', err);
-      res.status(500).json({
+  try {
+    const message = await findMessageById(req.params.messageId);
+    if (!message) {
+      return res.status(404).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Message not found'
       });
     }
-  };
+
+    const chat = await Chat.findOne({
+      _id: message.chatId,
+      members: { $in: [req.user.id] }
+    });
+
+    if (!chat) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to delete this message'
+      });
+    }
+
+    const deletedMessage = await Message.findByIdAndDelete(req.params.messageId);
+
+    if (deletedMessage) {
+      const chat = await Chat.findById(deletedMessage.chatId);
+      if (chat?.lastMessage?.equals(deletedMessage._id)) {
+        const prevMessage = await Message.findOne(
+          { chatId: deletedMessage.chatId, _id: { $ne: deletedMessage._id } },
+          {},
+          { sort: { createdAt: -1 } }
+        );
+
+        await Chat.findByIdAndUpdate(deletedMessage.chatId, {
+          lastMessage: prevMessage?._id || null
+        });
+      }
+
+      const io = req.app.get('socketio');
+      if (io) {
+        io.to(deletedMessage.chatId).emit('messageDeleted', {
+          messageId: deletedMessage._id,
+          chatId: deletedMessage.chatId,
+          deletedBy: req.user.id
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Message deleted successfully',
+      deletedMessage
+    });
+
+  } catch (err) {
+    console.error('Error deleting message:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};

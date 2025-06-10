@@ -44,7 +44,6 @@ io.on('connection', (socket) => {
 
 app.set('socketio', io);
 
-// Kết nối tới MongoDB
 const db = process.env.MONGO_URI;
 mongoose.connect(db, {
     useNewUrlParser: true,
@@ -74,6 +73,8 @@ const blogRoutes = require('./routes/blog');
 const uploadRoutes = require('./routes/upload');
 const packageRoutes = require('./routes/package');
 const messageRoutes = require('./routes/message');
+const postAlertRoutes = require('./routes/postAlert');
+const chatBoxRoutes = require('./routes/chatBox');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -88,6 +89,8 @@ app.use('/api/blog', blogRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/alert', postAlertRoutes);
+app.use('/api/chatbox', chatBoxRoutes);
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));

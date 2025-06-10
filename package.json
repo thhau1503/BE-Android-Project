@@ -9,6 +9,7 @@
   "author": "Hau",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.7.8",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
@@ -32,6 +33,7 @@
     "nodemailer": "^6.9.15",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "puppeteer": "^24.8.2",
     "react-leaflet": "^4.2.1",
     "request": "^2.88.2",
     "requst": "^0.0.1-security",
