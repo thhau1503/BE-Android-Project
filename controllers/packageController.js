@@ -1,4 +1,3 @@
-// controllers/packageController.js
 const PostPackage = require('../models/PostPackage');
 const UserPackage = require('../models/UserPackage');
 const User = require('../models/User');
@@ -8,8 +7,8 @@ const crypto = require('crypto');
 const querystring = require('querystring');
 const axios = require('axios');
 const Payment = require('../models/Payment');
+const config = require('../config/default.json');
 
-// === ADMIN CONTROLLERS ===
 
 // Lấy tất cả các gói (admin panel)
 exports.getAllPackages = async (req, res) => {
@@ -129,7 +128,9 @@ exports.getActivePackages = async (req, res) => {
 // Tạo giao dịch thanh toán với VNPay
 exports.createPayment = async (req, res) => {
     try {
-        const { packageId } = req.body;
+        process.env.TZ = 'Asia/Ho_Chi_Minh'; // Quan trọng: Đặt múi giờ Việt Nam
+
+        const { packageId, bankCode } = req.body;
         if (!packageId) {
             return res.status(400).json({ error: 'Thiếu thông tin gói' });
         }
@@ -140,7 +141,7 @@ exports.createPayment = async (req, res) => {
             return res.status(404).json({ error: 'Gói không tồn tại hoặc không còn hoạt động' });
         }
 
-        // Lấy thông tin VNPay từ config thay vì env
+        // Lấy thông tin VNPay từ config
         const config = require('../config/default.json');
         const vnp_TmnCode = config.vnp_TmnCode;
         const vnp_HashSecret = config.vnp_HashSecret;
@@ -148,30 +149,46 @@ exports.createPayment = async (req, res) => {
         const vnp_ReturnUrl = config.vnp_ReturnUrl;
 
         // Tạo thông tin đơn hàng
-        const orderId = moment().format('DDHHmmss');
-        const amount = postPackage.price; // Số tiền
+        const date = new Date();
+        const createDate = moment(date).format('YYYYMMDDHHmmss');
+        const orderId = moment(date).format('DDHHmmss');
+        const amount = parseInt(postPackage.price); // Đảm bảo là số nguyên
         const orderInfo = `Thanh toan goi ${postPackage.name}`;
-        const orderType = 'billpayment';
-        const locale = 'vn';
-        const currCode = 'VND';
+
+        // Xử lý IP
+        let ipAddr = req.headers['x-forwarded-for'] ||
+            req.connection.remoteAddress ||
+            req.socket.remoteAddress ||
+            req.connection.socket.remoteAddress;
+
+        if (ipAddr.includes('::ffff:')) {
+            ipAddr = ipAddr.split('::ffff:')[1];
+        } else if (ipAddr === '::1') {
+            ipAddr = '127.0.0.1';
+        }
 
         // Khởi tạo object chứa tham số
         const vnp_Params = {
             vnp_Version: '2.1.0',
             vnp_Command: 'pay',
             vnp_TmnCode: vnp_TmnCode,
-            vnp_Locale: locale,
-            vnp_CurrCode: currCode,
+            vnp_Locale: 'vn',
+            vnp_CurrCode: 'VND',
             vnp_TxnRef: orderId,
             vnp_OrderInfo: orderInfo,
-            vnp_OrderType: orderType,
-            vnp_Amount: amount * 100, // Nhân 100 vì VNPay yêu cầu
+            vnp_OrderType: 'other', // Sửa từ 'billpayment' thành 'other'
+            vnp_Amount: amount * 100,
             vnp_ReturnUrl: vnp_ReturnUrl,
-            vnp_IpAddr: req.ip || '127.0.0.1',
-            vnp_CreateDate: moment().format('YYYYMMDDHHmmss')
+            vnp_IpAddr: ipAddr,
+            vnp_CreateDate: createDate
         };
 
-        // Tạo đối tượng Payment mới
+        // Thêm bankCode nếu có
+        if (bankCode && bankCode !== '') {
+            vnp_Params['vnp_BankCode'] = bankCode;
+        }
+
+        // Tạo đối tượng Payment
         const payment = new Payment({
             user: req.user.id,
             package: packageId,
@@ -183,25 +200,23 @@ exports.createPayment = async (req, res) => {
 
         const savedPayment = await payment.save();
 
-        // Sắp xếp các tham số theo key
+        // Sắp xếp tham số và tạo chữ ký (sử dụng qs thay vì querystring)
         const sortedParams = sortObject(vnp_Params);
-
-        // Debug log
-        console.log('Sorted params before signing:', sortedParams);
-
-        // Tạo chữ ký
-        const signData = querystring.stringify(sortedParams, { encode: false });
+        const qs = require('qs');
+        const signData = qs.stringify(sortedParams, { encode: false });
+        const crypto = require('crypto');
         const hmac = crypto.createHmac('sha512', vnp_HashSecret);
-        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-        sortedParams['vnp_SecureHash'] = signed;
+        const signed = hmac.update(new Buffer(signData, 'utf-8')).digest('hex');
 
-        // Tạo URL thanh toán đúng cách
-        // Thay thế đoạn tạo paymentUrl bằng cách này:
-        const paymentUrl = vnp_Url + '?' + new URLSearchParams(sortedParams).toString();
+        // Thêm chữ ký vào params
+        const finalParams = { ...sortedParams, vnp_SecureHash: signed };
 
-        console.log('Final payment URL:', paymentUrl);
+        // Tạo URL thanh toán
+        const paymentUrl = vnp_Url + '?' + qs.stringify(finalParams, { encode: false });
 
-        // Trả về URL thanh toán cho client
+        // Trong createPayment, sau khi tạo signature
+        debugSignature('CREATE PAYMENT', vnp_Params, sortedParams, signData, signed);
+
         res.status(200).json({
             paymentUrl,
             paymentId: savedPayment._id
@@ -212,30 +227,49 @@ exports.createPayment = async (req, res) => {
     }
 };
 
-// Xác nhận thanh toán từ VNPay callback
 exports.paymentCallback = async (req, res) => {
+    console.log('=== VNPay Callback Debug ===');
+    console.log('Query params:', req.query);
+    
     try {
         const vnp_Params = req.query;
+        
+        if (!vnp_Params || Object.keys(vnp_Params).length === 0) {
+            console.log('No query parameters received');
+            return res.redirect(`${process.env.CLIENT_URL}/thanks?status=error&message=No parameters received`);
+        }
+        
         const secureHash = vnp_Params['vnp_SecureHash'];
-
+        
         // Xóa các tham số không cần thiết
-        delete vnp_Params['vnp_SecureHash'];
-        delete vnp_Params['vnp_SecureHashType'];
+        const paramsToVerify = { ...vnp_Params };
+        delete paramsToVerify['vnp_SecureHash'];
+        delete paramsToVerify['vnp_SecureHashType'];
 
-        // Sắp xếp các tham số
-        const sortedParams = sortObject(vnp_Params);
-
-        // Kiểm tra chữ ký
-        const vnp_HashSecret = process.env.VNP_HASH_SECRET;
-        const signData = querystring.stringify(sortedParams, { encode: false });
+        // ✅ SỬA: Sử dụng CÙNG CÁCH với createPayment
+        const sortedParams = sortObject(paramsToVerify);
+        const vnp_HashSecret = config.vnp_HashSecret;
+        
+        // ✅ SỬA: Sử dụng qs thay vì querystring (giống createPayment)
+        const qs = require('qs');
+        const signData = qs.stringify(sortedParams, { encode: false });
         const hmac = crypto.createHmac('sha512', vnp_HashSecret);
-        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+        
+        // ✅ SỬA: Sử dụng new Buffer (giống createPayment)
+        const signed = hmac.update(new Buffer(signData, 'utf-8')).digest('hex');
 
         let paymentStatus = 'failed';
         let message = 'Thanh toán thất bại';
 
+        console.log('=== CALLBACK SIGNATURE DEBUG ===');
+        console.log('Params to verify:', paramsToVerify);
+        console.log('Sorted params:', sortedParams);
+        console.log('Sign data:', signData);
+        console.log('Calculated signature:', signed);
+        console.log('Received signature:', secureHash);
+        console.log('Signatures match:', secureHash === signed);
+
         if (secureHash === signed) {
-            // Kiểm tra kết quả giao dịch
             const orderId = vnp_Params['vnp_TxnRef'];
             const responseCode = vnp_Params['vnp_ResponseCode'];
 
@@ -243,25 +277,85 @@ exports.paymentCallback = async (req, res) => {
                 paymentStatus = 'success';
                 message = 'Thanh toán thành công';
 
-                // Cập nhật payment
+                // Tìm payment
                 const payment = await Payment.findOne({ orderId });
-                if (payment) {
+                if (payment && payment.status === 'pending') {
                     payment.status = 'completed';
                     payment.responseData = vnp_Params;
                     await payment.save();
 
                     // Kích hoạt gói cho user
-                    await activatePackageForUser(payment.user, payment.package, payment._id);
+                    try {
+                        await activatePackageForUser(payment.user, payment.package, payment._id);
+                        console.log('Package activated successfully for user:', payment.user);
+                    } catch (activationError) {
+                        console.error('Error activating package:', activationError);
+                        paymentStatus = 'error';
+                        message = 'Thanh toán thành công nhưng có lỗi kích hoạt gói';
+                    }
+                } else if (!payment) {
+                    console.error('Payment not found for orderId:', orderId);
+                    paymentStatus = 'error';
+                    message = 'Không tìm thấy thông tin giao dịch';
                 }
+            } else {
+                // Cập nhật payment status thành failed
+                const payment = await Payment.findOne({ orderId });
+                if (payment) {
+                    payment.status = 'failed';
+                    payment.responseData = vnp_Params;
+                    await payment.save();
+                }
+                
+                const errorMessages = {
+                    '07': 'Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).',
+                    '09': 'Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking tại ngân hàng.',
+                    '10': 'Giao dịch không thành công do: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần',
+                    '11': 'Giao dịch không thành công do: Đã hết hạn chờ thanh toán. Xin quý khách vui lòng thực hiện lại giao dịch.',
+                    '12': 'Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng bị khóa.',
+                    '13': 'Giao dịch không thành công do Quý khách nhập sai mật khẩu xác thực giao dịch (OTP).',
+                    '24': 'Giao dịch không thành công do: Khách hàng hủy giao dịch',
+                    '51': 'Giao dịch không thành công do: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch.',
+                    '65': 'Giao dịch không thành công do: Tài khoản của Quý khách đã vượt quá hạn mức giao dịch trong ngày.',
+                    '75': 'Ngân hàng thanh toán đang bảo trì.',
+                    '79': 'Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định.'
+                };
+                message = errorMessages[responseCode] || `Thanh toán thất bại với mã lỗi: ${responseCode}`;
             }
+        } else {
+            console.error('Invalid signature in VNPay callback');
+            paymentStatus = 'error';
+            message = 'Chữ ký không hợp lệ';
         }
 
-        // Redirect về trang kết quả thanh toán
-        res.redirect(`${process.env.CLIENT_URL}/payment-result?status=${paymentStatus}&message=${encodeURIComponent(message)}`);
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        let redirectUrl;
+        
+        if (paymentStatus === 'success') {
+            redirectUrl = `${clientUrl}/thanks?status=success&message=${encodeURIComponent(message)}`;
+        } else {
+            redirectUrl = `${clientUrl}/thanks?status=${paymentStatus}&message=${encodeURIComponent(message)}`;
+        }
+        
+        console.log('Redirecting to:', redirectUrl);
+        // Trong paymentCallback, sau khi tạo signature
+        debugSignature('CALLBACK VERIFY', paramsToVerify, sortedParams, signData, signed);
+        res.redirect(redirectUrl);
+        
     } catch (error) {
         console.error('Error in payment callback:', error);
-        res.redirect(`${process.env.CLIENT_URL}/payment-result?status=error&message=${encodeURIComponent('Lỗi hệ thống')}`);
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        res.redirect(`${clientUrl}/thanks?status=error&message=${encodeURIComponent('Lỗi hệ thống')}`);
     }
+};
+
+const debugSignature = (title, params, sortedParams, signData, signature) => {
+    console.log(`=== ${title} ===`);
+    console.log('Original params:', params);
+    console.log('Sorted params:', sortedParams);
+    console.log('Sign data:', signData);
+    console.log('Signature:', signature);
+    console.log('=========================');
 };
 
 // Kiểm tra trạng thái thanh toán
@@ -296,8 +390,13 @@ exports.getCurrentPackage = async (req, res) => {
         const userPackage = await UserPackage.findOne({
             user: req.user.id,
             isActive: true,
-            expiresAt: { $gt: new Date() }
         }).populate('package');
+
+        console.log(userPackage)    ;
+
+        const all = await UserPackage.find();
+        console.log("Tất cả các gói của user:", all);
+
 
         if (!userPackage) {
             return res.status(404).json({
@@ -338,33 +437,34 @@ exports.getUserPackageHistory = async (req, res) => {
 // === HELPER FUNCTIONS ===
 
 // Kích hoạt gói cho user
+// controllers/packageController.js - Xóa tất cả function cũ và thay bằng:
 async function activatePackageForUser(userId, packageId, paymentId) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
+        console.log('Activating package:', { userId, packageId, paymentId });
+        
         // Lấy thông tin gói
         const postPackage = await PostPackage.findById(packageId).session(session);
-        if (!postPackage) {
-            throw new Error('Gói không tồn tại');
+        if (!postPackage || !postPackage.isActive) {
+            throw new Error('Gói không tồn tại hoặc đã bị vô hiệu hóa');
         }
 
         // Tính thời gian hết hạn
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + postPackage.duration);
 
-        // Kiểm tra xem user có gói đang hoạt động không
-        const existingPackage = await UserPackage.findOne({
-            user: userId,
-            isActive: true,
-            expiresAt: { $gt: new Date() }
-        }).session(session);
-
-        if (existingPackage) {
-            // Nếu đã có gói đang hoạt động, vô hiệu hóa gói cũ
-            existingPackage.isActive = false;
-            await existingPackage.save({ session });
-        }
+        // Tìm và vô hiệu hóa tất cả gói cũ đang hoạt động
+        await UserPackage.updateMany(
+            {
+                user: userId,
+                isActive: true,
+                expiresAt: { $gt: new Date() }
+            },
+            { $set: { isActive: false } },
+            { session }
+        );
 
         // Tạo gói mới
         const userPackage = new UserPackage({
@@ -377,10 +477,18 @@ async function activatePackageForUser(userId, packageId, paymentId) {
             paymentId: paymentId
         });
 
-        await userPackage.save({ session });
+        const savedUserPackage = await userPackage.save({ session });
         await session.commitTransaction();
 
-        return userPackage;
+        console.log('Package activated successfully:', {
+            userPackageId: savedUserPackage._id,
+            userId,
+            packageId,
+            postsLeft: postPackage.postLimit,
+            expiresAt: expiryDate
+        });
+
+        return savedUserPackage;
     } catch (error) {
         await session.abortTransaction();
         console.error('Error activating package:', error);
@@ -392,15 +500,18 @@ async function activatePackageForUser(userId, packageId, paymentId) {
 
 // Sắp xếp các tham số theo key (yêu cầu của VNPay)
 function sortObject(obj) {
-    const sorted = {};
-    const keys = Object.keys(obj).sort();
-
-    for (const key of keys) {
+    let sorted = {};
+    let str = [];
+    let key;
+    for (key in obj) {
         if (obj.hasOwnProperty(key)) {
-            sorted[key] = obj[key];
+            str.push(encodeURIComponent(key));
         }
     }
-
+    str.sort();
+    for (key = 0; key < str.length; key++) {
+        sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, "+");
+    }
     return sorted;
 }
 

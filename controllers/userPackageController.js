@@ -287,8 +287,6 @@ exports.checkPostPermission = async (req, res, next) => {
         const userPackage = await UserPackage.findOne({
             user: req.user.id,
             isActive: true,
-            expiresAt: { $gt: new Date() },
-            postsLeft: { $gt: 0 }
         });
         
         if (!userPackage) {
@@ -296,7 +294,6 @@ exports.checkPostPermission = async (req, res, next) => {
             const activePackage = await UserPackage.findOne({
                 user: req.user.id,
                 isActive: true,
-                expiresAt: { $gt: new Date() }
             });
             
             if (!activePackage) {

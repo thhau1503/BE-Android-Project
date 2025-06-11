@@ -11,10 +11,10 @@ const userSchema = new Schema({
     isOnline: { type: Boolean, default: true },
     avatar: {
         url: String,
-        public_id: String
+        public_id: String,
     },
-    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Danh sách người theo dõi mình
-    following: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Danh sách người mình theo dõi
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 }, {
     timestamps: true
 }

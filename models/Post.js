@@ -32,6 +32,27 @@ const postSchema = new Schema({
         enum: ['Active', 'Inactive', 'Deleted', 'Pending', 'Locked'], 
         default: 'Pending' 
     }, // Trạng thái tin đăng
+    priceEvaluation: {
+      evaluation: { type: String }, // "Giá cao so với khu vực", "Giá thấp so với khu vực", etc.
+      level: { type: String }, // "high", "low", "normal"
+      predictedPrice: { type: Number },
+      priceDifference: { type: Number },
+      pricePercentage: { type: Number },
+      districtStats: {
+        meanPrice: { type: Number },
+        minPrice: { type: Number },
+        maxPrice: { type: Number }
+      }
+    },
+    imageCheck: {
+      hasDuplicates: { type: Boolean, default: false },
+      duplicateDetails: [{
+        url: { type: String },
+        matchedWith: { type: String },
+        matchedPostId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' }
+      }]
+    },
+    warnings: [{ type: String }]
 }, {
     timestamps: true 
 });
