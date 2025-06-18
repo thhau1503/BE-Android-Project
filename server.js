@@ -75,6 +75,7 @@ const packageRoutes = require('./routes/package');
 const messageRoutes = require('./routes/message');
 const postAlertRoutes = require('./routes/postAlert');
 const chatBoxRoutes = require('./routes/chatBox');
+const revenueRoutes = require('./routes/revenue');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -91,6 +92,7 @@ app.use('/api/packages', packageRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/alert', postAlertRoutes);
 app.use('/api/chatbox', chatBoxRoutes);
+app.use('/api/stats', revenueRoutes);
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));

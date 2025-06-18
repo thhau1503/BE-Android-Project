@@ -13,6 +13,8 @@ exports.createRequest = async (req, res) => {
     }
 };
 
+
+
 // Lấy tất cả yêu cầu
 exports.getAllRequests = async (req, res) => {
     try {
@@ -96,6 +98,8 @@ exports.acceptRequest = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 }
+
+
 
 //Cập nhật trạng thái yêu cầu thành Declined
 exports.declineRequest = async (req, res) => {

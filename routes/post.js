@@ -487,6 +487,10 @@ router.put('/:postId/lock', auth(['Renter']), postController.blockedPost);
  */
 router.get('/top-views', postController.getTopPostsByViews);
 
+router.get('/top-hot', postController.getTopPostsByViewsPastWeek);
+
+
+
 /**
  * @swagger
  * /api/post/districts:
