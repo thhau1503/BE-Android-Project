@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require("../middleware/auth");
 const postController = require('../controllers/postController');
+const userPackageController = require('../controllers/userPackageController');
 const { upload } = require('../config/cloudinaryConfig');
 /**
  * @swagger
@@ -215,7 +216,7 @@ const { upload } = require('../config/cloudinaryConfig');
  *       500:
  *         description: Lỗi server
  */
-router.post('/create', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), postController.createPost);
+router.post('/create', auth(['Renter']), userPackageController.checkPostPermission, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), postController.createPost);
 
 /**
  * @swagger

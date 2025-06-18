@@ -14,11 +14,23 @@ const messageSchema = new Schema(
         content: {
             type: String,
         },
-
+        attachments: [{
+            url: String,
+            type: {
+                type: String,
+                enum: ['image', 'video', 'file']
+            }
+        }],
+        readBy: [{  
+            type: Schema.Types.ObjectId,
+            ref: "User"
+        }]
     },
     {
         timestamps: true,
     }
 );
-
+messageSchema.index({ chatId: 1 }); 
+messageSchema.index({ chatId: 1, createdAt: -1 }); 
+messageSchema.index({ sender: 1 });
 module.exports = mongoose.model("Message", messageSchema);

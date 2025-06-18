@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 const Post = require("../models/Post");
+const UserPackage = require("../models/UserPackage");
 const { cloudinary } = require('../config/cloudinaryConfig');
 const API_KEY = '9YHLYJH0cPEqnF9yCHOUrY23rEQKZp9v8vUmdQmS';
 const axios = require('axios');
 const Comment = require('../models/Comment');
+const { evaluatePrice } = require('../services/priceService');
+const { checkDuplicateImages } = require('../services/imageService');
 
 async function getCoordinatesFromAddress(address) {
   try {
@@ -33,10 +36,12 @@ exports.createPost = async (req, res) => {
 
     const address = `${parsedLocation.address}, ${parsedLocation.ward}, ${parsedLocation.district}, ${parsedLocation.city}, Việt Nam`;
 
-    console.log(`https://rsapi.goong.io/geocode?address=${encodeURIComponent(address)}&api_key=${API_KEY}`);
     const { lat, lon } = await getCoordinatesFromAddress(address);
     const parsedAmenities = JSON.parse(amenities);
     const parsedAdditionalCosts = JSON.parse(additionalCosts);
+
+    const parsedPrice = parseInt(price) || 0;
+    const parsedSize = parseInt(size) || 0;
 
     const images = req.files.images ? req.files.images.map(file => ({
       url: file.path,
@@ -48,31 +53,112 @@ exports.createPost = async (req, res) => {
       public_id: file.filename
     })) : [];
 
-    const newPost = new Post({
-      title,
-      description,
-      price,
-      location: {
-        address: parsedLocation.address,
-        city: parsedLocation.city,
-        district: parsedLocation.district,
-        ward: parsedLocation.ward,
-        geoLocation: {
-          type: 'Point',
-          coordinates: [lon, lat] 
-        }
-      },
-      landlord,
-      roomType,
-      size,
-      amenities: parsedAmenities,
-      additionalCosts: parsedAdditionalCosts,
-      images,
-      videos
-    });
+    let imageCheckResult = { hasDuplicates: false, duplicateDetails: [] };
+    if (req.files?.images?.length > 0) {
+      const imageCheck = await checkDuplicateImages(req.files.images);
+      if (imageCheck.success && imageCheck.data.results) {
+        imageCheckResult.hasDuplicates = imageCheck.data.results.some(r => r.duplicate);
+        imageCheckResult.duplicateDetails = imageCheck.data.results
+          .filter(r => r.duplicate)
+          .map(r => ({
+            url: r.filename,
+            matchedWith: r.matched_with,
+            matchedPostId: r.post_id
+          }));
+      }
+    }
 
-    const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
+    let priceEvaluationResult = {};
+    const priceCheck = await evaluatePrice(
+      parsedSize,
+      parsedLocation.district,
+      parsedLocation.city,
+      parsedPrice
+    );
+    
+    if (priceCheck.success) {
+      priceEvaluationResult = {
+        evaluation: priceCheck.data.price_evaluation,
+        level: priceCheck.data.evaluation_level,
+        predictedPrice: priceCheck.data.predicted_price,
+        priceDifference: priceCheck.data.price_difference,
+        pricePercentage: priceCheck.data.price_percentage,
+        districtStats: {
+          meanPrice: priceCheck.data.district_stats.mean_price,
+          minPrice: priceCheck.data.district_stats.min_price,
+          maxPrice: priceCheck.data.district_stats.max_price
+        }
+      };
+    }
+
+    const warnings = [];
+    if (imageCheckResult.hasDuplicates) {
+      warnings.push('Bài đăng chứa ảnh trùng lặp với bài đăng khác');
+    }
+    if (priceEvaluationResult.level === 'high') {
+      warnings.push('Giá thuê cao hơn mức trung bình khu vực');
+    } else if (priceEvaluationResult.level === 'low') {
+      warnings.push('Giá thuê thấp hơn mức trung bình khu vực');
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Tạo bài đăng mới
+      const newPost = new Post({
+        title,
+        description,
+        price,
+        location: {
+          address: parsedLocation.address,
+          city: parsedLocation.city,
+          district: parsedLocation.district,
+          ward: parsedLocation.ward,
+          geoLocation: {
+            type: 'Point',
+            coordinates: [lon, lat]
+          }
+        },
+        landlord,
+        roomType,
+        size,
+        amenities: parsedAmenities,
+        additionalCosts: parsedAdditionalCosts,
+        images,
+        videos,
+        userPackage: req.userPackage ? req.userPackage._id : null,
+        priceEvaluation: priceEvaluationResult,
+        imageCheck: imageCheckResult,
+        warnings
+      });
+
+      const savedPost = await newPost.save({ session });
+
+      if (req.userPackage) {
+        const userPackage = await UserPackage.findById(req.userPackage._id).session(session);
+        if (userPackage) {
+          userPackage.postsLeft -= 1;
+          await userPackage.save({ session });
+        }
+      }
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(201).json({
+        success: true,
+        message: 'Tạo bài đăng thành công',
+        post: savedPost,
+        postsRemaining: req.userPackage ? req.userPackage.postsLeft - 1 : 0
+      });
+    } catch (error) {
+      // Abort transaction nếu có lỗi
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -441,7 +527,7 @@ exports.getPostsByLandlordId = async (req, res) => {
 // Lấy danh sách các bài post mới nhất
 exports.getLatestPosts = async (req, res) => {
   try {
-    const latestPosts = await Post.find({ status: 'Active'}).sort({ createdAt: -1 });
+    const latestPosts = await Post.find({ status: 'Active' }).sort({ createdAt: -1 });
     res.status(200).json(latestPosts);
   } catch (err) {
     console.error(err.message);
@@ -459,7 +545,7 @@ exports.increasePostViews = async (req, res) => {
 
     post.views += 1;
     await post.save();
-    res.status(200).json({ msg: 'Post views increased'});
+    res.status(200).json({ msg: 'Post views increased' });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error' });

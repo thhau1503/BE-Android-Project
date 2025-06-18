@@ -1,9 +1,6 @@
 
 const express = require('express');
 const router = express.Router();
-const config = require('config');
-const dateFormat = require('dateformat');
-const crypto = require('crypto');
 
 router.post('/create_payment_url', function (req, res, next) {
     var ipAddr = req.headers['x-forwarded-for'] ||

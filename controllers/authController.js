@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const mongoose = require('mongoose');
 const { sendSMS } = require("../services/sendSMS");
 const { sendOTP } = require("../services/emailService");
 const { generateOTP } = require("../services/otpService");
@@ -8,6 +9,85 @@ const { cloudinary } = require('../config/cloudinaryConfig');
 
 const tempUserStore = new Map();
 const otpCache = new Map();
+
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+exports.googleLogin = async (req, res) => {
+    try {
+        const { tokenId } = req.body;
+        
+        // Verify Google token
+        const ticket = await client.verifyIdToken({
+            idToken: tokenId,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const { email_verified, email, name, picture } = ticket.getPayload();
+
+        if (!email_verified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email not verified with Google'
+            });
+        }
+
+        // Check if user exists
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create new user if doesn't exist
+            user = new User({
+                username: name,
+                email: email,
+                avatar: {
+                    url: picture,
+                    public_id: 'google_avatar'
+                },
+                password: email + process.env.JWT_SECRET, // Generate random password
+                isVerified: true
+            });
+
+            await user.save();
+        }
+
+        // Generate JWT token
+        const payload = {
+            user: {
+                id: user.id,
+                email: user.email,
+                user_role: user.user_role
+            }
+        };
+
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({
+            success: true,
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                user_role: user.user_role
+            }
+        });
+
+    } catch (error) {
+        console.error('Google login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 const generateAccessToken = (user) => {
   return jwt.sign({ id: user.id, user_role: user.user_role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -394,5 +474,121 @@ exports.adminCreateUser = async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+exports.followUser = async (req, res) => {
+  try {
+    const userToFollow = await User.findById(req.params.userId);
+    const currentUser = await User.findById(req.user.id);
+
+    if (!userToFollow) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (currentUser.following.includes(userToFollow._id)) {
+      return res.status(400).json({ error: 'Already following this user' });
+    }
+
+    currentUser.following.push(userToFollow._id);
+    await currentUser.save();
+
+    userToFollow.followers.push(currentUser._id);
+    await userToFollow.save();
+
+    res.json({ message: 'Followed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.unfollowUser = async (req, res) => {
+  try {
+    const userToUnfollow = await User.findById(req.params.userId);
+    const currentUser = await User.findById(req.user.id);
+
+    if (!userToUnfollow) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!currentUser.following.includes(userToUnfollow._id)) {
+      return res.status(400).json({ error: 'Not following this user' });
+    }
+
+    currentUser.following.pull(userToUnfollow._id);
+    await currentUser.save();
+
+    userToUnfollow.followers.pull(currentUser._id);
+    await userToUnfollow.save();
+
+    res.json({ message: 'Unfollowed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getUserProfile = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    const profileUser = await User.findById(req.params.userId)
+      .select('-password -__v -refreshToken')
+      .lean();
+
+    if (!profileUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Lấy thông tin người dùng hiện tại
+    const currentUser = await User.findById(req.user.id)
+      .select('following followers')
+      .lean();
+
+    // Kiểm tra trạng thái follow:
+    // 1. isFollowing: người dùng hiện tại có đang theo dõi profileUser không
+    const isFollowing = currentUser.following.some(id => 
+      id.toString() === profileUser._id.toString()
+    );
+    
+    // 2. isFollower: profileUser có đang theo dõi người dùng hiện tại không
+    const isFollower = profileUser.following.some(id => 
+      id.toString() === currentUser._id.toString()
+    );
+
+    const [followers, following] = await Promise.all([
+      User.find({ _id: { $in: profileUser.followers || [] } })
+        .select('username avatar _id')
+        .lean(),
+      
+      User.find({ _id: { $in: profileUser.following || [] } })
+        .select('username avatar _id')
+        .lean()
+    ]);
+
+    res.json({
+      profile: {
+        ...profileUser,
+        followers,
+        following,
+        followersCount: followers.length,
+        followingCount: following.length
+      },
+      followStatus: {
+        isFollowing,
+        isFollower
+      }
+    });
+
+  } catch (error) {
+    console.error('Profile error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { 
+        details: error.message,
+        stack: error.stack 
+      })
+    });
   }
 };
