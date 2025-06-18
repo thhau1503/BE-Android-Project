@@ -83,16 +83,6 @@ exports.acceptRequest = async (req, res) => {
         }
         request.status = 'Accepted';
         const updatedRequest = await request.save();
-
-        const message = `Your request has been accepted`;
-        await notificationController.createNotification({
-            body:
-            {
-                message: message,
-                id_user: request.id_user_rent,
-            },
-            app: req.app,
-        });
         res.status(200).json(updatedRequest);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -110,16 +100,6 @@ exports.declineRequest = async (req, res) => {
         }
         request.status = 'Declined';
         const updatedRequest = await request.save();
-
-        const message = `Your request has been declined`;
-        await notificationController.createNotification({
-            body:
-            {
-                message: message,
-                id_user: request.id_user_rent,
-            },
-            app: req.app,
-        });
         res.status(200).json(updatedRequest);
     } catch (err) {
         res.status(500).json({ error: err.message });
