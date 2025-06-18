@@ -380,6 +380,26 @@ exports.getTopPostsByViews = async (req, res) => {
   }
 };
 
+exports.getTopPostsByViewsPastWeek = async (req, res) => {
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const topPosts = await Post.find({
+      createdAt: {
+        $gte: oneWeekAgo,  
+        $lte: new Date()   
+      },
+      status: 'Active'
+    })
+    .sort({ views: -1 })  
+    .limit(10)
+    res.status(200).json(topPosts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Lấy danh sách trọ theo thể loại
 exports.getPostsByRoomType = async (req, res) => {
   try {
